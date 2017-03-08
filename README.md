@@ -25,7 +25,7 @@ When loading client pages in your browser, check the JavaScript console for mess
 
 ### Public Development @ Cloud9
 
-[Cloud9 Preview](https://preview.c9users.io/philmaker/messaging/meshable/)
+[Cloud9 Preview](https://preview.c9users.io/philmaker/messaging/godsend/)
 
 [Sign-in | Cloud9 IDE - Ajax.org](https://ide.c9.io/philmaker/messaging)
 
