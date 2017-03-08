@@ -9,8 +9,6 @@ Security, error handling, and fault tolerance need more evaluation.
 When loading client pages in your browser, check the JavaScript console for message output.
 
 	e.g. http://127.0.0.1/godsend/examples/
-	
-Then check your browser's console for messages.
 
 ### Key Features
 
