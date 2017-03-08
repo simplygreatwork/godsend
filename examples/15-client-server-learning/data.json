@@ -1,0 +1,32 @@
+{
+  "users": {
+    "agent": {
+      "credentials": {
+        "username": "agent",
+        "passphrase": "passphrase-to-hash"
+      },
+      "patterns": {
+        "sendable": [],
+        "receivable": [
+          {
+            "topic": "post-message"
+          }
+        ]
+      }
+    },
+    "client": {
+      "credentials": {
+        "username": "client",
+        "passphrase": "passphrase-to-hash"
+      },
+      "patterns": {
+        "sendable": [
+          {
+            "topic": "post-message"
+          }
+        ],
+        "receivable": []
+      }
+    }
+  }
+}

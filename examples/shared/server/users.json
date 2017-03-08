@@ -1,0 +1,53 @@
+{
+	"broker" : {
+		"credentials" : {
+			"username" : "broker",
+			"passphrase" : "passphrase-to-hash"
+		},
+		"patterns" : {
+			"sendable" : [{
+				"topic" : "authentication",
+				"action" : "get-user"
+			}],
+			"receivable" : [{
+				"topic" : "authentication",
+				"action" : "sign-in"
+			}]
+		}
+	},
+	"authenticator" : {
+		"credentials" : {
+			"username" : "authenticator",
+			"passphrase" : "passphrase-to-hash"
+		},
+		"patterns" : {
+			"sendable" : [],
+			"receivable" : [{
+				"topic" : "authentication",
+				"action" : "get-user"
+			}, {
+				"topic" : "authentication",
+				"action" : "put-user"
+			}]
+		}
+	},
+	"admin" : {
+		"credentials" : {
+			"username" : "admin",
+			"passphrase" : "passphrase-to-hash"
+		},
+		"patterns" : {
+			"sendable" : [{
+				"topic" : "authentication",
+				"action" : "get-user"
+			}, {
+				"topic" : "authentication",
+				"action" : "put-user"
+			}, {
+				"topic" : "authentication",
+				"action" : "sign-in"
+			}],
+			"receivable" : []
+		}
+	}
+}

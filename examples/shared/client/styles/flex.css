@@ -1,0 +1,72 @@
+
+.flex-container {
+  height:100%;
+}
+.flex-row, .flex-column {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-box-direction: normal;
+  -webkit-box-orient: horizontal;
+  -webkit-flex-direction: row;
+  -ms-flex-direction: row;
+  flex-direction: row;
+  -webkit-flex-wrap: nowrap;
+  -ms-flex-wrap: nowrap;
+  flex-wrap: nowrap;
+  -webkit-box-pack: start;
+  -webkit-justify-content: flex-start;
+  -ms-flex-pack: start;
+  justify-content: flex-start;
+  -webkit-align-content: stretch;
+  -ms-flex-line-pack: stretch;
+  align-content: stretch;
+  -webkit-box-align: stretch;
+  -webkit-align-items: stretch;
+  -ms-flex-align: stretch;
+  align-items: stretch;
+}
+.flex-column {
+  -webkit-box-orient: vertical;
+  -webkit-flex-direction: column;
+  -ms-flex-direction: column;
+  flex-direction: column;
+}
+.flex-child {
+  -webkit-box-flex: 1;
+  -webkit-flex: 1;
+  -ms-flex: 1;
+  flex: 1;
+  -webkit-align-self: auto;
+  -ms-flex-item-align: auto;
+  align-self: auto;
+}
+.flex-centered-cell {
+  display:flex;
+  font-size:150%;
+  align-content:center;
+  justify-content:center;
+  align-items: center;
+  width:100%;
+  height:auto;
+  background-color:#ffffff;
+}
+.flex-overflow-cell {
+  display:flex;
+  font-size:400%;
+  width:100%;
+  height:auto;
+  background-color:#ffffff;
+  overflow:scroll;
+  overflow-x:hidden;
+}
+.flex-one {flex:1;}
+.flex-two {flex:2;}
+.flex-three {flex:3;}
+.flex-four {flex:4;}
+.flex-five {flex:5;}
+.flex-six {flex:6;}
+.flex-seven {flex:7;}
+.flex-eight {flex:8;}
+.flex-nine {flex:9;}

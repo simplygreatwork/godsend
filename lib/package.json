@@ -1,0 +1,26 @@
+{
+  "name": "messaging-examples",
+  "version": "0.0.1",
+  "description": "Messaging Examples",
+  "main": "main.js",
+  "scripts": {
+    "start": "node main.js"
+  },
+  "dependencies": {
+    "helios-kernel": "^0.9.7",
+    "js-logger": "^1.3.0",
+    "minimist": "^1.2.0",
+    "node-uuid": "^1.4.7",
+    "serve-index": "^1.8.0",
+    "socket.io-client": "^1.7.3"
+  },
+  "devDependencies": {
+    "tape": "^4.6.3"
+  },
+  "engines": {
+    "node": "0.12.x"
+  },
+  "keywords": [],
+  "author": "Philip Weaver",
+  "contributors": []
+}
