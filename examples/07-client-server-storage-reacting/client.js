@@ -1,15 +1,12 @@
 
 godsend.ready(function(godsend) {
-
-var Bus = godsend.Bus;
-var Broker = godsend.Broker;
-var Exchange = godsend.exchange.Open;
+Logger.ready(function() {
 
 Example = Class.extend({
 	
 	initialize : function(properties) {
 		
-		var bus = new Bus({
+		var bus = new godsend.Bus({
 			local : false
 		});
 		new Receiver.Task({
@@ -63,7 +60,7 @@ Sender = Class.extend({
 						}
 					},
 					receive : function(result) {
-						console.log('Result: ' + JSON.stringify(result, null, 2));
+						Logger.get('main').log('Result: ' + JSON.stringify(result, null, 2));
 						sequence.next();
 					}.bind(this)
 				});
@@ -85,7 +82,7 @@ Sender = Class.extend({
 						}
 					},
 					receive : function(result) {
-						console.log('Result: ' + JSON.stringify(result, null, 2));
+						Logger.get('main').log('Result: ' + JSON.stringify(result, null, 2));
 						sequence.next();
 					}.bind(this)
 				});
@@ -131,7 +128,7 @@ Receiver = {
 					}
 				}.bind(this),
 				run : function(request, response) {
-					console.log('Task receiver was notified that a task was updated.');
+					Logger.get('main').log('Task receiver was notified that a task was updated.');
 					request.next();
 				}.bind(this)
 			});
@@ -150,7 +147,7 @@ Receiver = {
 					}
 				}.bind(this),
 				run : function(request, response) {
-					console.log('Task receiver was notified that a patient was updated.');
+					Logger.get('main').log('Task receiver was notified that a patient was updated.');
 					request.next();
 				}.bind(this)
 			});
@@ -190,7 +187,7 @@ Receiver = {
 					}
 				}.bind(this),
 				run : function(request, response) {
-					console.log('Patient receiver was notified that a task was updated.');
+					Logger.get('main').log('Patient receiver was notified that a task was updated.');
 					request.next();
 				}.bind(this)
 			});
@@ -209,7 +206,7 @@ Receiver = {
 					}
 				}.bind(this),
 				run : function(request, response) {
-					console.log('Patient receiver was notified that a patient was updated.');
+					Logger.get('main').log('Patient receiver was notified that a patient was updated.');
 					request.next();
 				}.bind(this)
 			});
@@ -220,4 +217,5 @@ Receiver = {
 
 new Example({});
 	
+});
 });

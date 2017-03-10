@@ -1,20 +1,14 @@
 
 godsend.ready(function(godsend) {
-
-var Bus = godsend.Bus;
-var Broker = godsend.Broker;
-var Exchange = godsend.exchange.Open;
+Logger.ready(function() {
 
 Example = Class.extend({
 	
 	initialize : function(properties) {
 		
 		var sender = new Sender({
-			bus : new Bus({
-				local : false,
-				broker : new Broker({
-					exchange : new Exchange()
-				})
+			bus : new godsend.Bus({
+				local : false
 			})
 		});
 		sender.connect(function() {
@@ -63,7 +57,7 @@ Sender = Class.extend({
 						}
 					},
 					receive : function(result) {
-						console.log('Result: ' + JSON.stringify(result));
+						Logger.get('main').log('Result: ' + JSON.stringify(result));
 						sequence.next();
 					}.bind(this)
 				});
@@ -84,7 +78,7 @@ Sender = Class.extend({
 						}
 					},
 					receive : function(result) {
-						console.log('Result: ' + JSON.stringify(result));
+						Logger.get('main').log('Result: ' + JSON.stringify(result));
 						sequence.next();
 					}.bind(this)
 				});
@@ -101,7 +95,7 @@ Sender = Class.extend({
 						message : 'Message from user "new-user".'
 					},
 					receive : function(result) {
-						console.log('Result: ' + JSON.stringify(result));
+						Logger.get('main').log('Result: ' + JSON.stringify(result));
 						sequence.next();
 					}.bind(this)
 				});
@@ -113,4 +107,5 @@ Sender = Class.extend({
 
 new Example({});
 	
+});
 });

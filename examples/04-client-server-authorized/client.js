@@ -1,16 +1,13 @@
 
 godsend.ready(function(godsend) {
-
-var Bus = godsend.Bus;
-var Broker = godsend.Broker;
-var Exchange = godsend.exchange.Open;
+Logger.ready(function() {
 
 Example = Class.extend({
 	
 	initialize : function(properties) {
 		
 		var sender = new Sender({
-			bus : new Bus({
+			bus : new godsend.Bus({
 				local : false
 			})
 		})
@@ -38,7 +35,7 @@ Sender = Class.extend({
 	
 	start : function() {
 		
-		console.log('Sending request.');
+		Logger.get('main').log('Sending request.');
 		this.connection.send({
 			pattern : {
 				topic : 'post-message'
@@ -47,7 +44,7 @@ Sender = Class.extend({
 				message : 'Can you hear me now?'
 			},
 			receive : function(result) {
-				console.log('Received response: ' + JSON.stringify(result));
+				Logger.get('main').log('Received response: ' + JSON.stringify(result));
 			}.bind(this)
 		});
 	}
@@ -55,4 +52,5 @@ Sender = Class.extend({
 
 new Example({});
 	
+});
 });

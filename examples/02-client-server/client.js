@@ -1,15 +1,12 @@
 
 godsend.ready(function(godsend) {
-
-var Bus = godsend.Bus;
-var Broker = godsend.Broker;
-var Exchange = godsend.exchange.Open;
+Logger.ready(function() {
 
 Example = Class.extend({
 	
 	initialize : function(properties) {
 		
-		var bus = new Bus({
+		var bus = new godsend.Bus({
 			local : false
 		});
 		var sender = new Sender({
@@ -45,7 +42,7 @@ Sender = Class.extend({
 			},
 			data : {},
 			receive : function(result) {
-				console.log('Received message response from the server: ' + JSON.stringify(result));
+				Logger.get('main').log('Received message response from the server: ' + JSON.stringify(result));
 			}.bind(this)
 		});
 	}
@@ -53,4 +50,5 @@ Sender = Class.extend({
 
 new Example({});
 	
+});
 });

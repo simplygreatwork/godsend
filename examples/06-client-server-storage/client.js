@@ -1,16 +1,13 @@
 
 godsend.ready(function(godsend) {
-
-var Bus = godsend.Bus;
-var Broker = godsend.Broker;
-var Exchange = godsend.exchange.Open;
+Logger.ready(function() {
 
 Example = Class.extend({
 	
 	initialize : function(properties) {
 		
 		var sender = new Sender({
-			bus : new Bus({
+			bus : new godsend.Bus({
 				local : false
 			})
 		})
@@ -75,7 +72,7 @@ Sender = Class.extend({
 						}
 					},
 					receive : function(result) {
-						console.log('Result: ' + JSON.stringify(result, null, 2));
+						Logger.get('main').log('Result: ' + JSON.stringify(result, null, 2));
 						sequence.next();
 					}.bind(this)
 				});
@@ -97,7 +94,7 @@ Sender = Class.extend({
 						}
 					},
 					receive : function(result) {
-						console.log('Result: ' + JSON.stringify(result, null, 2));
+						Logger.get('main').log('Result: ' + JSON.stringify(result, null, 2));
 						sequence.next();
 					}.bind(this)
 				});
@@ -121,7 +118,7 @@ Sender = Class.extend({
 						}
 					},
 					receive : function(result) {
-						console.log('Result: ' + JSON.stringify(result, null, 2));
+						Logger.get('main').log('Result: ' + JSON.stringify(result, null, 2));
 						sequence.next();
 					}.bind(this)
 				});
@@ -133,4 +130,5 @@ Sender = Class.extend({
 
 new Example({});
 	
+});
 });
