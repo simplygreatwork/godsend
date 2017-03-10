@@ -52,8 +52,8 @@ Sender = Class.extend({
 						key : uuid.v4(),
 						value : {}
 					},
-					receive : function(properties) {
-						console.log('Done: ' + JSON.stringify(properties, null, 2));
+					receive : function(result) {
+						console.log('Result: ' + JSON.stringify(result, null, 2));
 						sequence.next();
 					}.bind(this)
 				});
@@ -74,8 +74,8 @@ Sender = Class.extend({
 							title : 'New Task'
 						}
 					},
-					receive : function(properties) {
-						console.log('Done: ' + JSON.stringify(properties, null, 2));
+					receive : function(result) {
+						console.log('Result: ' + JSON.stringify(result, null, 2));
 						sequence.next();
 					}.bind(this)
 				});
@@ -96,8 +96,8 @@ Sender = Class.extend({
 							title : 'Another New Task'
 						}
 					},
-					receive : function(properties) {
-						console.log('Done: ' + JSON.stringify(properties, null, 2));
+					receive : function(result) {
+						console.log('Result: ' + JSON.stringify(result, null, 2));
 						sequence.next();
 					}.bind(this)
 				});
@@ -120,8 +120,8 @@ Sender = Class.extend({
 							created : true
 						}
 					},
-					receive : function(properties) {
-						console.log('Done: ' + JSON.stringify(properties, null, 2));
+					receive : function(result) {
+						console.log('Result: ' + JSON.stringify(result, null, 2));
 						sequence.next();
 					}.bind(this)
 				});

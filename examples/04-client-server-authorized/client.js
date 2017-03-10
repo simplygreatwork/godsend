@@ -46,8 +46,8 @@ Sender = Class.extend({
 			data : {
 				message : 'Can you hear me now?'
 			},
-			receive : function(properties) {
-				console.log('Received response: ' + JSON.stringify(properties));
+			receive : function(result) {
+				console.log('Received response: ' + JSON.stringify(result));
 			}.bind(this)
 		});
 	}

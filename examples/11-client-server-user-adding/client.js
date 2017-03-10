@@ -62,8 +62,8 @@ Sender = Class.extend({
 							receivable : []
 						}
 					},
-					receive : function(properties) {
-						console.log('Done: ' + JSON.stringify(properties));
+					receive : function(result) {
+						console.log('Result: ' + JSON.stringify(result));
 						sequence.next();
 					}.bind(this)
 				});
@@ -83,8 +83,8 @@ Sender = Class.extend({
 							passphrase : Credentials.get('new-user').passphrase,
 						}
 					},
-					receive : function(properties) {
-						console.log('Done: ' + JSON.stringify(properties));
+					receive : function(result) {
+						console.log('Result: ' + JSON.stringify(result));
 						sequence.next();
 					}.bind(this)
 				});
@@ -100,8 +100,8 @@ Sender = Class.extend({
 					data : {
 						message : 'Message from user "new-user".'
 					},
-					receive : function(properties) {
-						console.log('Done: ' + JSON.stringify(properties));
+					receive : function(result) {
+						console.log('Result: ' + JSON.stringify(result));
 						sequence.next();
 					}.bind(this)
 				});
