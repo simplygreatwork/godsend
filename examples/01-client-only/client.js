@@ -40,13 +40,13 @@ Receiver = Class.extend({
 			},
 			connected : function(properties) {
 				this.connection = properties.connection;
-				this.initializeReceivers();
+				this.receive();
 				callback();
 			}.bind(this)
 		});
 	},
 	
-	initializeReceivers : function() {
+	receive : function() {
 		
 		this.connection.receive({
 			id : 'post-message',
