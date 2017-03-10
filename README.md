@@ -14,7 +14,7 @@ When loading client pages in your browser, check the JavaScript console for mess
 
 - A clean, concise, yet expressive API
 - Property-based message patterns.
-- Mutable composition: inject message receivers from any location in your application to decouple concerns such as validation and transformation.
+- Mutable composition: inject message receivers from any location in your project to decouple concerns such as validation and transformation.
 - Multiple message receivers are able to process, filter, and transform a particular message request in a controlled, composed order as a linked list.
 - The secure messaging exchange learns authorization automatically (with exercise).
 - Message receivers may be versioned according to the connected user. Receiver versions are dynamically substituted in the receiver list upon each user's request. (coming soon)

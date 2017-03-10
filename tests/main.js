@@ -44,8 +44,11 @@ Runner = Class.extend({
 					message : 'Can you hear me now?'
 				},
 				receive : function(result) {
-					assert.notEquals(result.error, undefined, 'Does error exist?');
-					assert.pass('Received a valid result with error.');
+					console.log('result: ' + JSON.stringify(result, null, 2));
+					assert.notEquals(result.errors, undefined, 'Does result exist?');
+					assert.notEquals(result.errors, undefined, 'Do errors exist?');
+					assert.notEquals(result.errors.length, 0, 'Does more than one error exist?');
+					assert.pass('Received a result with error.');
 					assert.end();
 				}.bind(this)
 			});
@@ -60,11 +63,11 @@ Runner = Class.extend({
 				data : {
 					message : 'Can you hear me now?'
 				},
-				receive : function(properties) {
-					console.log('properties: ' + JSON.stringify(properties));
-					assert.notEquals(properties.result, undefined, 'Does result exist?');
-					assert.notEquals(properties.result.value, undefined, 'Does result value exist?');
-					assert.notOk(properties.result.error, 'Does result error exist?');
+				receive : function(result) {
+					console.log('result: ' + JSON.stringify(result, null, 2));
+					assert.notEquals(result, undefined, 'Does result exist?');
+					assert.notEquals(result.value, undefined, 'Does result value exist?');
+					assert.ok(result.errors, 'Do result errors exist?');
 					assert.pass('Received a valid response.');
 					assert.end();
 				}.bind(this)

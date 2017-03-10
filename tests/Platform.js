@@ -66,13 +66,13 @@ Agent = Class.extend({
 			},
 			connected : function(properties) {
 				this.connection = properties.connection;
-				this.initializeReceivers();
+				this.receive();
 				callback();
 			}.bind(this)
 		});
 	},
 	
-	initializeReceivers : function() {
+	receive : function() {
 		
 		this.connection.receive({
 			id : 'post-message',
@@ -86,9 +86,7 @@ Agent = Class.extend({
 				}
 			}.bind(this),
 			run : function(request, response) {
-				response.data = {
-					value : 'Received a message from the client securely: ' + JSON.stringify(request.data)
-				}
+				response.data = 'Received a message from the client securely: ' + JSON.stringify(request.data);
 				request.next();
 			}.bind(this)
 		});
