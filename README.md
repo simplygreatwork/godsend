@@ -12,13 +12,12 @@ When loading client pages in your browser, check the JavaScript console for mess
 
 ### Key Features
 
-- Flexibility
-- Composability
 - A clean, concise, yet expressive API
 - Property-based message patterns.
-- Multiple message receivers are able to process, filter, and transform the same message request in a controlled order.
+- Mutable composition: inject message receivers from any location in your application to decouple concerns such as validation and transformation.
+- Multiple message receivers are able to process, filter, and transform a particular message request in a controlled, composed order as a linked list.
 - The secure messaging exchange learns authorization automatically (with exercise).
-- Message receiver versioning according to the connected user
+- Message receivers may be versioned according to the connected user. Receiver versions are dynamically substituted in the receiver list upon each user's request. (coming soon)
 - Few assumptions
 	- Universal/isomorphic (in the browser and in Node.js)
 	- The messaging scheme is totally open and configurable per receiver and is not necessary predetermined to use wildcards or regular expressions for pattern matching. But you can. The default and intended scheme is to match multiple property/value pairs within an object.
@@ -62,13 +61,11 @@ When loading client pages in your browser, check the JavaScript console for mess
 				passphrase : Utility.digest('passphrase-to-hash')
 			}
 		},
-		finished : function(properties) {
-			this.console.log('Result after attempting to sign in: ' + JSON.stringify(properties));
-			this.connection.credentials = {
-				username : 'client-admin',
-				passphrase : Utility.digest('passphrase-to-hash')
-			};
-			sequence.next();
+		receive : function(result) {
+			if (result.final) {
+				this.console.log('Result after attempting to sign in: ' + JSON.stringify(result));
+				sequence.next();
+			}
 		}.bind(this)
 	});
 	
@@ -128,9 +125,11 @@ When loading client pages in your browser, check the JavaScript console for mess
 				}
 			}
 		},
-		finished : function(properties) {
-			this.console.log('Added a new user: ' + JSON.stringify(properties));
-			sequence.next();
+		receive : function(result) {
+			if (result.final) {
+				this.console.log('Added a new user: ' + JSON.stringify(result));
+				sequence.next();
+			}
 		}.bind(this)
 	});
 
@@ -186,13 +185,11 @@ When loading client pages in your browser, check the JavaScript console for mess
 				passphrase : ''
 			}
 		},
-		finished : function(properties) {
-			this.console.log('Client result after attempting to signin: ' + JSON.stringify(properties));
-			this.connection.credentials = {
-				username : 'client-alpha',
-				passphrase : ''
-			};
-			sequence.next();
+		receive : function(result) {
+			if (result.final) {
+				this.console.log('Client result after attempting to signin: ' + JSON.stringify(properties));
+				sequence.next();
+			}
 		}.bind(this)
 	});
 	
@@ -211,11 +208,13 @@ When loading client pages in your browser, check the JavaScript console for mess
 				subject : 'New Task'
 			}
 		},
-		finished : function(properties) {
-			this.task = properties.result;
-			this.console.log('Client result after attempting to put a new task: ' + JSON.stringify(properties));
-			this.console.log('This is the new task: ' + JSON.stringify(this.task.value));
-			sequence.next();
+		receive : function(result) {
+			if (result.final) {
+				this.console.log('Client result after attempting to put a new task: ' + JSON.stringify(result));
+				this.task = result.value;
+				this.console.log('This is the new task: ' + JSON.stringify(this.task.value));
+				sequence.next();
+			}
 		}.bind(this)
 	});
 
