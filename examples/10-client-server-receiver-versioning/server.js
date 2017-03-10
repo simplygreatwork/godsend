@@ -147,6 +147,27 @@ Agent = Class.extend({
 			}.bind(this)
 		});
 
+		this.connection.receive({
+			id : 'store-get-tasks-transform',
+			version : 3,
+			after : 'store-get',
+			on : function(request, response) {
+				if (request.matches({
+					topic : 'store',
+					action : 'get',
+					collection : 'tasks'
+				})) {
+					request.accept();
+				} else {
+					request.skip();
+				}
+			}.bind(this),
+			run : function(request, response) {
+				console.log('Transforming the task. (v3)');
+				request.next();
+			}.bind(this)
+		});
+
 	}
 });
 
