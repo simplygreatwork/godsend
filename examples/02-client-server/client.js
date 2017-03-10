@@ -44,7 +44,7 @@ Sender = Class.extend({
 				topic : 'post-message'
 			},
 			data : {},
-			done : function(properties) {
+			receive : function(properties) {
 				console.log('Received message response from the server: ' + JSON.stringify(properties));
 			}.bind(this)
 		});

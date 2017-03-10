@@ -49,7 +49,7 @@ Sender = Class.extend({
 					data : {
 						message : 'Message'
 					},
-					done : function(properties) {
+					receive : function(properties) {
 						console.log('Done: ' + JSON.stringify(properties));
 						sequence.next();
 					}.bind(this)
@@ -70,7 +70,7 @@ Sender = Class.extend({
 							passphrase : Credentials.get('client').passphrase,
 						},
 					},
-					done : function(properties) {
+					receive : function(properties) {
 						console.log('Done: ' + JSON.stringify(properties));
 						sequence.next();
 					}.bind(this)
@@ -87,7 +87,7 @@ Sender = Class.extend({
 					data : {
 						message : 'Message'
 					},
-					done : function(properties) {
+					receive : function(properties) {
 						console.log('Done: ' + JSON.stringify(properties));
 						sequence.next();
 					}.bind(this)

@@ -161,7 +161,7 @@ Agent = Class.extend({
 						collection : request.pattern.collection
 					},
 					data : request.data,
-					done : function(properties) {
+					receive : function(properties) {
 						request.next();
 					}.bind(this)
 				});

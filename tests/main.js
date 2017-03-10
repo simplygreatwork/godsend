@@ -43,7 +43,7 @@ Runner = Class.extend({
 				data : {
 					message : 'Can you hear me now?'
 				},
-				done : function(result) {
+				receive : function(result) {
 					assert.notEquals(result.error, undefined, 'Does error exist?');
 					assert.pass('Received a valid result with error.');
 					assert.end();
@@ -60,7 +60,7 @@ Runner = Class.extend({
 				data : {
 					message : 'Can you hear me now?'
 				},
-				done : function(properties) {
+				receive : function(properties) {
 					console.log('properties: ' + JSON.stringify(properties));
 					assert.notEquals(properties.result, undefined, 'Does result exist?');
 					assert.notEquals(properties.result.value, undefined, 'Does result value exist?');
