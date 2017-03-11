@@ -115,7 +115,7 @@ Receiver = {
 		receive : function() {
 			
 			this.connection.receive({
-				id : 'store-put-tasks-notify',
+				id : 'store-put-tasks-notify-task-receiver',
 				on : function(request, response) {
 					if (request.matches({
 						topic : 'store',
@@ -134,7 +134,7 @@ Receiver = {
 			});
 			
 			this.connection.receive({
-				id : 'store-put-patients-notify',
+				id : 'store-put-patients-notify-task-receiver',
 				on : function(request, response) {
 					if (request.matches({
 						topic : 'store',
@@ -174,7 +174,7 @@ Receiver = {
 		receive : function() {
 			
 			this.connection.receive({
-				id : 'store-put-tasks-notify',
+				id : 'store-put-tasks-notify-patient-receiver',
 				on : function(request, response) {
 					if (request.matches({
 						topic : 'store',
@@ -193,7 +193,7 @@ Receiver = {
 			});
 			
 			this.connection.receive({
-				id : 'store-put-patients-notify',
+				id : 'store-put-patients-notify-patient-receiver',
 				on : function(request, response) {
 					if (request.matches({
 						topic : 'store',
