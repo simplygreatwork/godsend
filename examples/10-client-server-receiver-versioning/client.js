@@ -39,6 +39,7 @@ Sender = Class.extend({
 			
 			function() {
 				
+				Logger.get('main').log('Sending request.');
 				this.connection.send({
 					pattern : {
 						topic : 'store',

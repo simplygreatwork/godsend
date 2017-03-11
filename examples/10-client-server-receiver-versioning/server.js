@@ -96,8 +96,7 @@ Agent = Class.extend({
 				}
 			}.bind(this),
 			run : function(request, response) {
-				console.log('Getting the item.');
-				console.log('Only one transformer should be called. In development.');
+				console.log('Getting the task.');
 				response.data = {
 					title : 'Untitled Task',
 					done : false
@@ -128,6 +127,8 @@ Agent = Class.extend({
 		
 		this.connection.receive({
 			id : 'store-get-tasks-transform',
+			version : 2,
+			'default' : true,
 			after : 'store-get',
 			on : function(request, response) {
 				if (request.matches({
@@ -142,6 +143,27 @@ Agent = Class.extend({
 			}.bind(this),
 			run : function(request, response) {
 				console.log('Transforming the task. (v2)');
+				request.next();
+			}.bind(this)
+		});
+
+		this.connection.receive({
+			id : 'store-get-tasks-transform',
+			version : 3,
+			after : 'store-get',
+			on : function(request, response) {
+				if (request.matches({
+					topic : 'store',
+					action : 'get',
+					collection : 'tasks'
+				})) {
+					request.accept();
+				} else {
+					request.skip();
+				}
+			}.bind(this),
+			run : function(request, response) {
+				console.log('Transforming the task. (v3)');
 				request.next();
 			}.bind(this)
 		});
