@@ -48,7 +48,7 @@ Example = Class.extend({
 				receivable : []
 			},
 			versions : {
-				'store-get-tasks-transform' : 2
+				'store-get-tasks-transform' : 3
 			}
 		}
    }
@@ -129,6 +129,7 @@ Agent = Class.extend({
 		this.connection.receive({
 			id : 'store-get-tasks-transform',
 			version : 2,
+			'default' : true,
 			after : 'store-get',
 			on : function(request, response) {
 				if (request.matches({
