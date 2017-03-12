@@ -3,7 +3,7 @@
   "description": "Godsend tests: simple and elegant tests for messaging for microservices.",
   "author": "Philip Weaver",
   "contributors": []
-  "version": "0.1.7",
+  "version": "0.1.8",
   "main": "main.js",
   "scripts": {
     "start": "node main.js"
