@@ -19,7 +19,7 @@ Runner = Class.extend({
 		test('Establishing a connection to the bus with bad credentials.', function(assert) {
 			
 			new godsend.Bus({
-				local : false
+				address : 'http://127.0.0.1:8080/'
 			}).connect({
 				credentials : {
 					username : Credentials.get('client').username,
@@ -36,7 +36,7 @@ Runner = Class.extend({
 		test('Establishing a connection to the bus with good credentials.', function(assert) {
 			
 			new godsend.Bus({
-				local : false
+				address : 'http://127.0.0.1:8080/'
 			}).connect({
 				credentials : {
 					username : Credentials.get('client').username,
