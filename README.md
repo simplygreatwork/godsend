@@ -17,7 +17,7 @@ Simple and elegant messaging for microservices
 
 When loading client pages in your browser, check the JavaScript console for message output.
 
-	e.g. http://127.0.0.1/godsend/examples/
+	e.g. http://127.0.0.1/examples/
 
 https://www.notion.so/Messaging-30c17b4e590f44689d9571f1f1f690c0
 

@@ -1,6 +1,6 @@
 {
   "name": "godsend-tests",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Godsend tests",
   "main": "main.js",
   "scripts": {
@@ -13,7 +13,7 @@
     "tape": "4.6.3"
   },
   "engines": {
-    "node": "0.12.x"
+    "node": "4.6.x"
   },
   "keywords": [
     "microservice",
