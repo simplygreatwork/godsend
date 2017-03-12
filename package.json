@@ -3,7 +3,7 @@
   "description": "Godsend: simple and elegant messaging for microservices.",
   "author": "Philip Weaver",
   "contributors": [],
-  "version": "0.1.8",
+  "version": "0.1.9",
   "main": "lib/godsend/server/main.js'",
   "scripts": {
     "start": "node tests/main.js"
