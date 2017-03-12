@@ -15,7 +15,7 @@ Example = Class.extend({
 			new Authorizer({
 				users : this.users,
 				bus : this.bus = new godsend.Bus({
-					local : false,
+					address : 'http://127.0.0.1:8080/',
 					secure : false
 				})
 			}).connect(function() {

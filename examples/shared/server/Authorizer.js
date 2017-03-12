@@ -15,7 +15,7 @@ Authorizer = module.exports = Class.extend({
 	connect : function(callback) {
 		
 		this.bus = this.bus || new godsend.Bus({
-			local : false,
+			address : 'http://127.0.0.1:8080/',
 			secure : false
 		});
 		this.bus.connect({
