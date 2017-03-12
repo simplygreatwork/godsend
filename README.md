@@ -1,15 +1,6 @@
 # Godsend
 Simple and elegant messaging for microservices
 
-https://www.notion.so/Messaging-30c17b4e590f44689d9571f1f1f690c0
-
-This project is not currently suitable for production.
-Security, error handling, and fault tolerance need more evaluation.
-
-When loading client pages in your browser, check the JavaScript console for message output.
-
-	e.g. http://127.0.0.1/godsend/examples/
-
 ### Key Features
 
 - A clean, concise, yet expressive API
@@ -21,6 +12,17 @@ When loading client pages in your browser, check the JavaScript console for mess
 - Few assumptions
 	- Universal/isomorphic (in the browser and in Node.js)
 	- The messaging scheme is totally open and configurable per receiver and is not necessary predetermined to use wildcards or regular expressions for pattern matching. But you can. The default and intended scheme is to match multiple property/value pairs within an object.
+
+### Getting Started
+
+- This project is not currently suitable for production.
+- Security, error handling, and fault tolerance need more evaluation.
+
+When loading client pages in your browser, check the JavaScript console for message output.
+
+	e.g. http://127.0.0.1/godsend/examples/
+
+https://www.notion.so/Messaging-30c17b4e590f44689d9571f1f1f690c0
 
 ### Public Development @ Cloud9
 
