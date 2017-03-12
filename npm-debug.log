@@ -1,0 +1,35 @@
+0 info it worked if it ends with ok
+1 verbose cli [ '/home/ubuntu/.nvm/versions/node/v4.6.1/bin/node',
+1 verbose cli   '/home/ubuntu/.nvm/versions/node/v4.6.1/bin/npm',
+1 verbose cli   'publish',
+1 verbose cli   './' ]
+2 info using npm@2.15.9
+3 info using node@v4.6.1
+4 verbose publish [ './' ]
+5 verbose stack Error: Failed to parse json
+5 verbose stack Unexpected token '}' at 48:1
+5 verbose stack }
+5 verbose stack ^
+5 verbose stack     at parseError (/home/ubuntu/.nvm/versions/node/v4.6.1/lib/node_modules/npm/node_modules/read-package-json/read-json.js:390:11)
+5 verbose stack     at parseJson (/home/ubuntu/.nvm/versions/node/v4.6.1/lib/node_modules/npm/node_modules/read-package-json/read-json.js:79:23)
+5 verbose stack     at /home/ubuntu/.nvm/versions/node/v4.6.1/lib/node_modules/npm/node_modules/read-package-json/read-json.js:48:5
+5 verbose stack     at /home/ubuntu/.nvm/versions/node/v4.6.1/lib/node_modules/npm/node_modules/graceful-fs/graceful-fs.js:78:16
+5 verbose stack     at FSReqWrap.readFileAfterClose [as oncomplete] (fs.js:380:3)
+6 verbose cwd /home/ubuntu/workspace/godsend
+7 error Linux 4.8.8-c9
+8 error argv "/home/ubuntu/.nvm/versions/node/v4.6.1/bin/node" "/home/ubuntu/.nvm/versions/node/v4.6.1/bin/npm" "publish" "./"
+9 error node v4.6.1
+10 error npm  v2.15.9
+11 error file /home/ubuntu/workspace/godsend/package.json
+12 error code EJSONPARSE
+13 error Failed to parse json
+13 error Unexpected token '}' at 48:1
+13 error }
+13 error ^
+14 error File: /home/ubuntu/workspace/godsend/package.json
+15 error Failed to parse package.json data.
+15 error package.json must be actual JSON, not just JavaScript.
+15 error
+15 error This is not a bug in npm.
+15 error Tell the package author to fix their package.json file. JSON.parse
+16 verbose exit [ 1, true ]
