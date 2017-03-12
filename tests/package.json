@@ -1,7 +1,9 @@
 {
   "name": "godsend-tests",
-  "version": "0.1.5",
-  "description": "Godsend tests",
+  "description": "Godsend tests: simple and elegant tests for messaging for microservices.",
+  "author": "Philip Weaver",
+  "contributors": []
+  "version": "0.1.6",
   "main": "main.js",
   "scripts": {
     "start": "node main.js"
@@ -22,6 +24,16 @@
     "message-bus",
     "message-broker"
   ],
-  "author": "Philip Weaver",
-  "contributors": []
+  "license" : {
+    "type" : "MIT",
+    "url" : "https://opensource.org/licenses/MIT"
+  },
+  "repository" : {
+    "type" : "git",
+    "url" : "https://github.com/simplygreatwork/godsend.git"
+  },
+  "bugs" : {
+    "url" : "https://github.com/simplygreatwork/godsend/issues",
+    "email" : "simplygreatwork@gmail.com"
+  }
 }
