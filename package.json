@@ -1,6 +1,6 @@
 {
   "name": "godsend",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Godsend: simple and elegant messaging for microservices.",
   "main": "main.js",
   "scripts": {
