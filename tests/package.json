@@ -1,21 +1,27 @@
 {
   "name": "godsend-tests",
-  "version": "0.0.1",
-  "description": "godsend Tests",
+  "version": "0.1.0",
+  "description": "Godsend tests",
   "main": "main.js",
   "scripts": {
     "start": "node main.js"
   },
   "dependencies": {
-    "tape": "^4.6.3"
+    "tape": "4.6.3"
   },
   "devDependencies": {
-    "tape": "^4.6.3"
+    "tape": "4.6.3"
   },
   "engines": {
     "node": "0.12.x"
   },
-  "keywords": [],
+  "keywords": [
+    "microservice",
+    "microservices",
+    "messaging",
+    "message-bus",
+    "message-broker"
+  ],
   "author": "Philip Weaver",
   "contributors": []
 }

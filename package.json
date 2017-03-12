@@ -1,29 +1,35 @@
 {
-  "name": "messaging-examples",
-  "version": "0.0.1",
-  "description": "Messaging Examples",
+  "name": "godsend",
+  "version": "0.1.0",
+  "description": "Godsend: simple and elegant messaging for microservices.",
   "main": "main.js",
   "scripts": {
-    "start": "node main.js"
+    "start": "node test/main.js"
   },
   "dependencies": {
-    "express": "^4.15.2",
-    "helios-kernel": "^0.9.7",
-    "js-logger": "^1.3.0",
-    "minimist": "^1.2.0",
-    "node-uuid": "^1.4.7",
-    "proclaim": "^3.4.4",
-    "serve-index": "^1.8.0",
-    "socket.io": "^1.7.3",
-    "socket.io-client": "^1.7.3"
+    "express": "4.15.2",
+    "helios-kernel": "0.9.7",
+    "js-logger": "1.3.0",
+    "minimist": "1.2.0",
+    "node-uuid": "1.4.7",
+    "proclaim": "3.4.4",
+    "serve-index": "1.8.0",
+    "socket.io": "1.7.3",
+    "socket.io-client": "1.7.3"
   },
   "devDependencies": {
-    "tape": "^4.6.3"
+    "tape": "4.6.3"
   },
   "engines": {
     "node": "0.12.x"
   },
-  "keywords": [],
+  "keywords": [
+    "microservice",
+    "microservices",
+    "messaging",
+    "message-bus",
+    "message-broker"
+  ],
   "author": "Philip Weaver",
   "contributors": []
 }
