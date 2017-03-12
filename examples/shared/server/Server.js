@@ -8,6 +8,9 @@ Server = module.exports = Class.extend({
 	
 	initialize : function(properties) {
 	   
+		Logger.setLevel(Logger.INFO);
+		Logger.setLevel(Logger.OFF);
+	   
       Object.assign(this, properties);
       if (this.secure) {
          this.options = {

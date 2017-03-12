@@ -35,8 +35,8 @@ Receiver = Class.extend({
 				username : 'client-receiver',
 				passphrase : 'passphrase-to-hash'
 			},
-			responded : function(properties) {
-				this.connection = properties.connection;
+			responded : function(result) {
+				this.connection = result.connection;
 				this.receive();
 				callback();
 			}.bind(this)
@@ -75,8 +75,8 @@ Sender = Class.extend({
 				username : 'client-sender',
 				passphrase : 'passphrase-to-hash'
 			},
-			responded : function(properties) {
-				this.connection = properties.connection;
+			responded : function(result) {
+				this.connection = result.connection;
 				callback();
 			}.bind(this)
 		});
