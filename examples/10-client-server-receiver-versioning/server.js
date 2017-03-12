@@ -48,7 +48,7 @@ Example = Class.extend({
 				receivable : []
 			},
 			versions : {
-				'store-get-tasks-transform' : 3
+				'store-get-tasks-transform' : ' unversioned '
 			}
 		}
    }
@@ -120,15 +120,17 @@ Agent = Class.extend({
 				}
 			}.bind(this),
 			run : function(request, response) {
-				console.log('Transforming the task. (v1)');
+				console.log('Transforming the task. (unversioned)');
 				request.next();
 			}.bind(this)
 		});
 		
 		this.connection.receive({
 			id : 'store-get-tasks-transform',
-			version : 2,
-			'default' : true,
+			version : {
+				name : 'version-two',
+				'default' : true
+			},
 			after : 'store-get',
 			on : function(request, response) {
 				if (request.matches({
@@ -142,14 +144,14 @@ Agent = Class.extend({
 				}
 			}.bind(this),
 			run : function(request, response) {
-				console.log('Transforming the task. (v2)');
+				console.log('Transforming the task. (v2 : default)');
 				request.next();
 			}.bind(this)
 		});
-
+		
 		this.connection.receive({
 			id : 'store-get-tasks-transform',
-			version : 3,
+			version : 'version-three',
 			after : 'store-get',
 			on : function(request, response) {
 				if (request.matches({
@@ -167,7 +169,6 @@ Agent = Class.extend({
 				request.next();
 			}.bind(this)
 		});
-
 	}
 });
 
