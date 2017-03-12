@@ -6,9 +6,9 @@ Simple and elegant messaging for microservices
 - A clean, concise, yet expressive API
 - Property-based message patterns.
 - Mutable composition: inject message receivers from any location in your project to decouple concerns such as validation and transformation.
-- Multiple message receivers are able to process, filter, and transform a particular message request in a controlled, composed order as a linked list.
+- Multiple message receivers are able to process, filter, and transform a particular message request in a controlled, composed order.
 - The secure messaging exchange learns authorization automatically (with exercise).
-- Message receivers may be versioned according to the connected user. Receiver versions are dynamically substituted in the receiver list upon each user's request. (coming soon)
+- Message receivers may be versioned according to the connected user. Receiver versions are dynamically substituted in the receiver list upon each user's request.
 - Few assumptions
 	- Universal/isomorphic (in the browser and in Node.js)
 	- The messaging scheme is totally open and configurable per receiver and is not necessary predetermined to use wildcards or regular expressions for pattern matching. But you can. The default and intended scheme is to match multiple property/value pairs within an object.
