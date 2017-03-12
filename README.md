@@ -45,9 +45,13 @@ https://www.notion.so/Messaging-30c17b4e590f44689d9571f1f1f690c0
 			username : 'client-public',
 			passphrase : ''
 		},
-		connected : function(properties) {
-			this.connection = properties.connection;
-			this.initializeServices();
+		responded : function(result) {
+			if (result.errors) {
+				console.log(result.errors);
+			} else {
+				this.connection = result.connection;
+				this.initializeServices();
+			}
 		}.bind(this)
 	});
 
