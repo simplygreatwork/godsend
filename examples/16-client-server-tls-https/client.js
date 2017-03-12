@@ -26,7 +26,7 @@ Sender = Class.extend({
 				username : Credentials.get('client').username,
 				passphrase : Credentials.get('client').passphrase,
 			},
-			connected : function(properties) {
+			responded : function(properties) {
 				this.connection = properties.connection;
 				callback();
 			}.bind(this)

@@ -34,7 +34,7 @@ Sender = Class.extend({
 				username : Credentials.get('sender').username,
 				passphrase : Credentials.get('sender').passphrase,
 			},
-			connected : function(properties) {
+			responded : function(properties) {
 				this.connection = properties.connection;
 				callback(this);
 			}.bind(this)
@@ -104,7 +104,7 @@ Receiver = {
 					username : Credentials.get('task-receiver').username,
 					passphrase : Credentials.get('task-receiver').passphrase,
 				},
-				connected : function(properties) {
+				responded : function(properties) {
 					this.connection = properties.connection;
 					this.receive();
 					callback();
@@ -163,7 +163,7 @@ Receiver = {
 					username : Credentials.get('patient-receiver').username,
 					passphrase : Credentials.get('patient-receiver').passphrase,
 				},
-				connected : function(properties) {
+				responded : function(properties) {
 					this.connection = properties.connection;
 					this.receive();
 					callback();

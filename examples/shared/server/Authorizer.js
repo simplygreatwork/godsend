@@ -23,7 +23,7 @@ Authorizer = module.exports = Class.extend({
 				username : Credentials.get('authenticator').username,
 				passphrase : Credentials.get('authenticator').passphrase,
 			},
-			connected : function(properties) {
+			responded : function(properties) {
 				this.connection = properties.connection;
 				this.receive();
 				callback();

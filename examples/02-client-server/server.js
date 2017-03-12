@@ -49,7 +49,7 @@ Receiver = Class.extend({
 				username : 'client-receiver',
 				passphrase : ''
 			},
-			connected : function(properties) {
+			responded : function(properties) {
 				this.connection = properties.connection;
 				this.receive();
 				callback();

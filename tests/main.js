@@ -16,7 +16,24 @@ Runner = Class.extend({
 		var runner = this;
 		var test = require('tape');
 		
-		test('Establishing a connection to the bus.', function(assert) {
+		test('Establishing a connection to the bus with bad credentials.', function(assert) {
+			
+			new godsend.Bus({
+				local : false
+			}).connect({
+				credentials : {
+					username : Credentials.get('client').username,
+					passphrase : 'wrong',
+				},
+				responded : function(result) {
+					assert.notEquals(result.errors.length, 0, 'Does more than one error exist?');
+					assert.pass('The client has attempted to connect with an error.');
+					assert.end();
+				}.bind(this)
+			});
+		});
+		
+		test('Establishing a connection to the bus with good credentials.', function(assert) {
 			
 			new godsend.Bus({
 				local : false
@@ -25,10 +42,10 @@ Runner = Class.extend({
 					username : Credentials.get('client').username,
 					passphrase : Credentials.get('client').passphrase,
 				},
-				connected : function(properties) {
-					runner.connection = properties.connection;
-					assert.notEquals(properties.connection, null, 'Is the connection connected?');
-					assert.pass('The client has connected.');
+				responded : function(result) {
+					runner.connection = result.connection;
+					assert.notEquals(result.connection, null, 'Is the connection connected?');
+					assert.pass('The client has connected successfully.');
 					assert.end();
 				}.bind(this)
 			});

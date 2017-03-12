@@ -65,7 +65,7 @@ Agent = Class.extend({
 				username : Credentials.get('agent').username,
 				passphrase : Credentials.get('agent').passphrase,
 			},
-			connected : function(properties) {
+			responded : function(properties) {
 				this.connection = properties.connection;
 				this.receive();
 				callback();
