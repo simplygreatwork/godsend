@@ -15,14 +15,14 @@ Simple and elegant messaging for microservices
 
 ### Getting Started
 
-- This project is not currently suitable for production.
-- Security, error handling, and fault tolerance need more evaluation.
-
 When loading client pages in your browser, check the JavaScript console for message output.
 
 	e.g. http://127.0.0.1/godsend/examples/
 
 https://www.notion.so/Messaging-30c17b4e590f44689d9571f1f1f690c0
+
+- This project is not currently suitable for production.
+- Security, error handling, and fault tolerance need more evaluation.
 
 ### Public Development @ Cloud9
 
