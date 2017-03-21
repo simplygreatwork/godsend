@@ -1,6 +1,8 @@
 # Godsend
 Simple and elegant messaging for microservices
 
+There's currently a defect with receiver "before" and "after" ordering. Weight based ordering should be working fine. Needs to use topographical sorting. I'm almost finished adding streams support and the fix may be coming at that time (around March 28,2017.)
+
 ### Key Features
 
 - A clean, concise, yet expressive API
