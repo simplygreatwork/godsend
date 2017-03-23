@@ -38,14 +38,10 @@ Authorizer = module.exports = Class.extend({
 		this.connection.process({
 			id : 'authentication-get-user',
 			on : function(request) {
-				if (request.matches({
+				request.accept({
 					topic : 'authentication',
 					action : 'get-user'
-				})) {
-					request.accept();
-				} else {
-					request.skip();
-				}
+				});
 			}.bind(this),
 			run : function(stream) {
 				this.storage.get({
@@ -62,14 +58,10 @@ Authorizer = module.exports = Class.extend({
 		this.connection.process({
 			id : 'authentication-put-user',
 			on : function(request) {
-				if (request.matches({
+				request.accept({
 					topic : 'authentication',
 					action : 'put-user'
-				})) {
-					request.accept();
-				} else {
-					request.skip();
-				}
+				});
 			}.bind(this),
 			run : function(stream) {
 				this.storage.get({

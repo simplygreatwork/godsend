@@ -92,15 +92,11 @@ Agent = Class.extend({
 		this.connection.process({
 			id : 'store-all-tasks',
 			on : function(request) {
-				if (request.matches({
+				request.accept({
 					topic : 'store',
 					action : 'all',
 					collection : 'tasks'
-				})) {
-					request.accept();
-				} else {
-					request.skip();
-				}
+				});
 			}.bind(this),
 			run : function(stream) {
 				var collection = stream.request.pattern.collection;
@@ -128,14 +124,10 @@ Agent = Class.extend({
 			id : 'store-put',
 			cache : false,
 			on : function(request) {
-				if (request.matches({
+				request.accept({
 					topic : 'store',
 					action : 'put'
-				})) {
-					request.accept();
-				} else {
-					request.skip();
-				}
+				});
 			}.bind(this),
 			run : function(stream) {
 				console.log('Putting the task.');
@@ -152,15 +144,11 @@ Agent = Class.extend({
 			id : 'store-put-tasks-validate',
 			before : 'store-put',
 			on : function(request) {
-				if (request.matches({
+				request.accept({
 					topic : 'store',
 					action : 'put',
 					collection : 'tasks'
-				})) {
-					request.accept();
-				} else {
-					request.skip();
-				}
+				});
 			}.bind(this),
 			run : function(stream) {
 				console.log('Validating the task.');
@@ -180,15 +168,11 @@ Agent = Class.extend({
 			id : 'store-put-tasks-transform',
 			before : 'store-put-tasks-validate',
 			on : function(request) {
-				if (request.matches({
+				request.accept({
 					topic : 'store',
 					action : 'put',
 					collection : 'tasks'
-				})) {
-					request.accept();
-				} else {
-					request.skip();
-				}
+				});
 			}.bind(this),
 			run : function(stream) {
 				console.log('Transforming the task.');

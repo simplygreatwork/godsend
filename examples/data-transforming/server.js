@@ -81,13 +81,9 @@ Agent = Class.extend({
 		this.connection.process({
 			id : 'transform-object',
 			on : function(request) {
-				if (request.matches({
+				request.accept({
 					topic : 'transform-object'
-				})) {
-					request.accept();
-				} else {
-					request.skip();
-				}
+				});
 			}.bind(this),
 			run : function(stream) {
 				var object = stream.object;

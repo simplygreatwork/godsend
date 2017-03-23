@@ -93,13 +93,9 @@ Agent = Class.extend({
 		this.connection.process({
 			id : 'post-message',
 			on : function(request) {
-				if (request.matches({
+				request.accept({
 					topic : 'post-message'
-				})) {
-					request.accept();
-				} else {
-					request.skip();
-				}
+				});
 			}.bind(this),
 			run : function(stream) {
 				stream.push({

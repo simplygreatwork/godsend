@@ -149,14 +149,10 @@ var Secure = Open.extend({
 		this.connection.process({
 			id: 'authentication-sign-in',
 			on: function(request) {
-				if (request.matches({
-						topic: 'authentication',
-						action: 'sign-in'
-					})) {
-					request.accept();
-				} else {
-					request.skip();
-				}
+				request.accept({
+					topic: 'authentication',
+					action: 'sign-in'
+				});
 			}.bind(this),
 			run: function(stream) {
 				var credentials = stream.object.credentials;
