@@ -24,10 +24,7 @@
     "message-bus",
     "message-broker"
   ],
-  "license" : {
-    "type" : "MIT",
-    "url" : "https://opensource.org/licenses/MIT"
-  },
+  "license" : "MIT",
   "repository" : {
     "type" : "git",
     "url" : "https://github.com/simplygreatwork/godsend.git"

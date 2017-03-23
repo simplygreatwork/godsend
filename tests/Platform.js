@@ -1,4 +1,6 @@
 
+var Class = require('../godsend.js').Class;
+var Bus = require('../godsend.js').Bus;
 var Server = require('../examples/shared/server/Server.js');
 var Authorizer = require('../examples/shared/server/Authorizer.js');
 var Credentials = require('../examples/shared/server/Credentials.js');
@@ -56,7 +58,7 @@ Agent = Class.extend({
 	
 	connect : function(callback) {
 		
-		this.bus = new godsend.Bus({
+		this.bus = new Bus({
 			address : 'http://127.0.0.1:8080/'
 		});
 		this.bus.connect({
@@ -66,28 +68,24 @@ Agent = Class.extend({
 			},
 			responded : function(result) {
 				this.connection = result.connection;
-				this.receive();
+				this.process();
 				callback();
 			}.bind(this)
 		});
 	},
 	
-	receive : function() {
+	process : function() {
 		
-		this.connection.receive({
+		this.connection.process({
 			id : 'post-message',
 			on : function(request, response) {
-				if (request.matches({
+				request.accept({
 					topic : 'post-message'
-				})) {
-					request.accept();
-				} else {
-					request.skip();
-				}
+				});
 			}.bind(this),
-			run : function(request, response) {
-				response.data = 'Received a message from the client securely: ' + JSON.stringify(request.data);
-				request.next();
+			run : function(stream) {
+				stream.push('Received a message from the client securely: ' + JSON.stringify(stream.object));
+				stream.next();
 			}.bind(this)
 		});
 	}

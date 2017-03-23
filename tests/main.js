@@ -1,5 +1,8 @@
 
-require('../lib/godsend/server/main.js').ready(function(godsend) {
+var uuid = require('uuid');
+var Logger = require('js-logger');
+var Class = require('../godsend.js').Class;
+var Bus = require('../godsend.js').Bus;
 
 Runner = Class.extend({
 	
@@ -18,7 +21,7 @@ Runner = Class.extend({
 		
 		test('Establishing a connection to the bus with bad credentials.', function(assert) {
 			
-			new godsend.Bus({
+			new Bus({
 				address : 'http://127.0.0.1:8080/'
 			}).connect({
 				credentials : {
@@ -35,7 +38,7 @@ Runner = Class.extend({
 		
 		test('Establishing a connection to the bus with good credentials.', function(assert) {
 			
-			new godsend.Bus({
+			new Bus({
 				address : 'http://127.0.0.1:8080/'
 			}).connect({
 				credentials : {
@@ -83,7 +86,7 @@ Runner = Class.extend({
 				receive : function(result) {
 					console.log('result: ' + JSON.stringify(result, null, 2));
 					assert.notEquals(result, undefined, 'Does result exist?');
-					assert.notEquals(result.value, undefined, 'Does result value exist?');
+					assert.notEquals(result.objects, undefined, 'Does result value exist?');
 					assert.ok(result.errors, 'Do result errors exist?');
 					assert.pass('Received a valid response.');
 					assert.end();
@@ -101,5 +104,3 @@ Runner = Class.extend({
 });
 
 new Runner({});
-
-});
