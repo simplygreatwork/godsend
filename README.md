@@ -1,16 +1,17 @@
 # Godsend
 Simple and elegant messaging for microservices
 
-There's currently a defect with receiver "before" and "after" ordering. Weight based ordering should be working fine. Needs to use topographical sorting. I'm almost finished adding streams support and the fix may be coming at that time (around March 28,2017.)
+The current version (0.2.0) now supports message streaming. As of March 23/2017, version 0.2.0 has not yet been published to NPM.
 
 ### Key Features
 
-- A clean, concise, yet expressive API
-- Property-based message patterns.
+- Streaming: send messages to the bus as a stream and process messages as a stream.
 - Mutable composition: inject message receivers from any location in your project to decouple concerns such as validation and transformation.
 - Multiple message receivers are able to process, filter, and transform a particular message request in a controlled, composed order.
 - The secure messaging exchange learns authorization automatically (with exercise).
 - Message receivers may be versioned according to the connected user. Receiver versions are dynamically substituted in the receiver list upon each user's request.
+- Property-based message patterns.
+- A clean, concise, yet expressive API
 - Few assumptions
 	- Universal/isomorphic (in the browser and in Node.js)
 	- The messaging scheme is totally open and configurable per receiver and is not necessary predetermined to use wildcards or regular expressions for pattern matching. But you can. The default and intended scheme is to match multiple property/value pairs within an object.
@@ -34,13 +35,13 @@ https://www.notion.so/Messaging-30c17b4e590f44689d9571f1f1f690c0
 
 ### Examples
 
-### Create a bus to connect to
+### Create a bus to be able to connect to the broker
 
 	this.bus = new Bus({
-		address : 'http://127.0.0.1:8080/'
+	 	address : 'http://127.0.0.1:8080'
 	});
 
-### Connect to the bus initially as a public user
+### Connect to the broker initially as a public user
 
 	this.bus.connect({
 		credentials : {
@@ -48,12 +49,8 @@ https://www.notion.so/Messaging-30c17b4e590f44689d9571f1f1f690c0
 			passphrase : ''
 		},
 		responded : function(result) {
-			if (result.errors) {
-				console.log(result.errors);
-			} else {
-				this.connection = result.connection;
-				this.initializeServices();
-			}
+			this.connection = result.connection;
+			this.process();
 		}.bind(this)
 	});
 
@@ -69,14 +66,11 @@ https://www.notion.so/Messaging-30c17b4e590f44689d9571f1f1f690c0
 				passphrase : Utility.digest('passphrase-to-hash')
 			}
 		},
-		receive : function(result) {
-			if (result.final) {
-				this.console.log('Result after attempting to sign in: ' + JSON.stringify(result));
-				sequence.next();
-			}
+		received : function(result) {
+			this.console.log('Result after attempting to sign in: ' + JSON.stringify(result.objects));
+			sequence.next();
 		}.bind(this)
 	});
-	
 
 ### Create a new user which defines the user's authorized capabilities
 
@@ -133,51 +127,47 @@ https://www.notion.so/Messaging-30c17b4e590f44689d9571f1f1f690c0
 				}
 			}
 		},
-		receive : function(result) {
-			if (result.final) {
-				this.console.log('Added a new user: ' + JSON.stringify(result));
-				sequence.next();
-			}
+		received : function(result) {
+			this.console.log('Added a new user: ' + JSON.stringify(result.objects));
+			sequence.next();
 		}.bind(this)
 	});
 
 ### Intercept and validate the request to store a user by validating the request data
 
-	this.connection.receive({
+	this.connection.process({
 		id : 'store-validate-user',
 		before : 'store-put',
-		on : function(request, response) {
-			if (request.matches({
+		on : function(request) {
+			request.accept({
 				topic : 'store',
 				action : 'put',
 				collection : 'users'
-			})) {
-				request.accept();
-			} else {
-				request.skip();
-			}
+			});
 		},
-		run : function(request, response) {
+		run : function(stream) {
 			if (valid) {
-				request.next();
+				stream.push(stream.object);
+				stream.next();
 			} else {
-				response.respond({
+				stream.err({
 					error : 'The user is invalid.'
 				});
+				stream.next();
 			}
 		}.bind(this)
 	});
 
 ### Spawn a new client connection as a public user
 
-	this.bus.main.connect({
+	this.bus.connect({
 		credentials : {
 			username : 'client-public',
 			passphrase : ''
 		},
-		connected : function(properties) {
-			this.connection = properties.connection;
-			this.initializeServices();
+		responded : function(result) {
+			this.connection = result.connection;
+			this.process();
 		}.bind(this)
 	});
 
@@ -193,14 +183,11 @@ https://www.notion.so/Messaging-30c17b4e590f44689d9571f1f1f690c0
 				passphrase : ''
 			}
 		},
-		receive : function(result) {
-			if (result.final) {
-				this.console.log('Client result after attempting to signin: ' + JSON.stringify(properties));
-				sequence.next();
-			}
+		received : function(result) {
+			this.console.log('Client result after attempting to signin: ' + JSON.stringify(result.objects));
+			sequence.next();
 		}.bind(this)
 	});
-	
 
 ### Send a message to store a task
 
@@ -216,83 +203,65 @@ https://www.notion.so/Messaging-30c17b4e590f44689d9571f1f1f690c0
 				subject : 'New Task'
 			}
 		},
-		receive : function(result) {
-			if (result.final) {
-				this.console.log('Client result after attempting to put a new task: ' + JSON.stringify(result));
-				this.task = result.value;
-				this.console.log('This is the new task: ' + JSON.stringify(this.task.value));
-				sequence.next();
-			}
+		received : function(result) {
+			this.console.log('Client result after attempting to put a new task: ' + JSON.stringify(result.objects));
+			this.task = result.objects[0];
+			this.console.log('This is the new task: ' + JSON.stringify(this.task.value));
+			sequence.next();
 		}.bind(this)
 	});
 
 ### Receive a message to store data to any named collection
 
-	this.connection.receive({
+	this.connection.process({
 		id : 'store-put',
-		on : function(request, response) {
-			if (request.matches({
+		on : function(request) {
+			request.accept({
 				topic : 'store',
 				action : 'put'
-			})) {
-				request.accept();
-			} else {
-				request.skip();
-			}
+			})
 		}.bind(this),
-		run : function(request, response) {
+		run : function(stream) {
 			storage.put({
-				collection : request.pattern.collection,
-				key : request.data.key,
-				value : request.data.value,
+				collection : stream.request.pattern.collection,
+				key : stream.object.key,
+				value : stream.object.value,
 				callback : function(properties) {
-					response.data = {
-						key : request.data.key,
-						value : request.data.value
-					};
-					request.next();
+					stream.push({
+						key : stream.object.key,
+						value : stream.object.value
+					});
+					stream.next();
 				}.bind(this)
 			});
 		}.bind(this)
 	});
 	
-
 ### Filter the request to store any data by adding a creation date or modification date
 
 The property `before` inserts the receiver to execute before the data is stored.
 
-	this.connection.receive({
+	this.connection.process({
 		id : 'store-transform-date',
 		before : 'store-put',
-		on : function(request, response) {
-			if (request.matches({
+		on : function(request) {
+			request.accept({
 				topic : 'store',
 				action : 'put'
-			})) {
-				request.accept();
-			} else {
-				request.skip();
-			}
+			})
 		},
-		run : function(request, response) {
+		run : function(stream) {
 			storage.get({
-				collection : request.pattern.collection,
-				key : request.data.key,
+				collection : stream.request.pattern.collection,
+				key : stream.object.key,
 				callback : function(properties) {
-					var value = properties.value;
-					if (value) {
-						request.data.value.modified = new Date();
+					if (properties.value) {
+						stream.object.value.modified = new Date();
 					} else {
-						request.data.value.created = new Date();
+						stream.object.value.created = new Date();
 					}
-					storage.put({
-						collection : request.pattern.collection,
-						key : request.data.key,
-						value : request.data.value,
-						callback : function(properties) {
-							request.next();
-						}.bind(this)
-					});
+					stream.push(stream.object);
+					stream.next();
 				}.bind(this)
 			});
 		}.bind(this)
@@ -300,48 +269,37 @@ The property `before` inserts the receiver to execute before the data is stored.
 
 ### Filter a request to store task data by validating the request's data
 
-	this.connection.receive({
+	this.connection.process({
 		id : 'store-validate-task',
 		before : 'store-put',
-		on : function(request, response) {
-			if (request.matches({
+		on : function(request) {
+			request.accept({
 				topic : 'store',
 				action : 'put',
 				collection : 'tasks'
-			})) {
-				request.accept();
-			} else {
-				request.skip();
-			}
+			})
 		},
-		run : function(request, response) {
+		run : function(stream) {
 			if (valid) {
-				request.next();
+				stream.push(stream.object);
 			} else {
-				response.respond({
+				stream.err{
 					error : 'The task is invalid.'
 				});
 			}
+			stream.next();
 		}.bind(this)
 	});
 
 ### Send a request for a particular version of a receiver
 
-	
-
 ### Broadcast changes in real time after altering data in storage
 
 Add a receiver to run `after` data has been put in a storage collection.
 
-	
-
 ### Mutate a received request and resend to a new route pattern on the bus
 
-	
-
 ### Clone a received request, mutate, and resend to a new route pattern on the bus
-
-	
 
 ### Clone a received request, mutate, and resend to a new route pattern on a different bus
 
