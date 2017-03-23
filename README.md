@@ -35,6 +35,7 @@ https://www.notion.so/Messaging-30c17b4e590f44689d9571f1f1f690c0
 
 ### Examples
 
+### Create a bus to be able to connect to the broker
 
 ```javascript
 	this.bus = new Bus({
@@ -59,6 +60,7 @@ https://www.notion.so/Messaging-30c17b4e590f44689d9571f1f1f690c0
 
 ### Change the credentials to become an admin user 
 
+```javascript
 	this.connection.send({
 		pattern : {
 			topic : 'signin'
@@ -74,9 +76,11 @@ https://www.notion.so/Messaging-30c17b4e590f44689d9571f1f1f690c0
 			sequence.next();
 		}.bind(this)
 	});
+```
 
 ### Create a new user which defines the user's authorized capabilities
 
+```javascript
 	this.connection.send({
 		pattern : {
 			topic : 'store',
@@ -135,9 +139,11 @@ https://www.notion.so/Messaging-30c17b4e590f44689d9571f1f1f690c0
 			sequence.next();
 		}.bind(this)
 	});
+```
 
 ### Intercept and validate the request to store a user by validating the request data
 
+```javascript
 	this.connection.process({
 		id : 'store-validate-user',
 		before : 'store-put',
@@ -160,9 +166,11 @@ https://www.notion.so/Messaging-30c17b4e590f44689d9571f1f1f690c0
 			}
 		}.bind(this)
 	});
+```
 
 ### Spawn a new client connection as a public user
 
+```javascript
 	this.bus.connect({
 		credentials : {
 			username : 'client-public',
@@ -173,9 +181,11 @@ https://www.notion.so/Messaging-30c17b4e590f44689d9571f1f1f690c0
 			this.process();
 		}.bind(this)
 	});
+```
 
 ### Change the client connection's credentials to become the newly created user 
 
+```javascript
 	this.connection.send({
 		pattern : {
 			topic : 'signin'
@@ -191,9 +201,11 @@ https://www.notion.so/Messaging-30c17b4e590f44689d9571f1f1f690c0
 			sequence.next();
 		}.bind(this)
 	});
+```
 
 ### Send a message to store a task
 
+```javascript
 	this.connection.send({
 		pattern : {
 			topic : 'store',
@@ -213,9 +225,11 @@ https://www.notion.so/Messaging-30c17b4e590f44689d9571f1f1f690c0
 			sequence.next();
 		}.bind(this)
 	});
+```
 
 ### Receive a message to store data to any named collection
 
+```javascript
 	this.connection.process({
 		id : 'store-put',
 		on : function(request) {
@@ -239,11 +253,13 @@ https://www.notion.so/Messaging-30c17b4e590f44689d9571f1f1f690c0
 			});
 		}.bind(this)
 	});
+```
 	
 ### Filter the request to store any data by adding a creation date or modification date
 
 The property `before` inserts the processor to execute before the data is stored.
 
+```javascript
 	this.connection.process({
 		id : 'store-transform-date',
 		before : 'store-put',
@@ -270,8 +286,10 @@ The property `before` inserts the processor to execute before the data is stored
 		}.bind(this)
 	});
 
+```
 ### Filter a request to store task data by validating the request's data
 
+```javascript
 	this.connection.process({
 		id : 'store-validate-task',
 		before : 'store-put',
@@ -293,6 +311,7 @@ The property `before` inserts the processor to execute before the data is stored
 			stream.next();
 		}.bind(this)
 	});
+```
 
 ### Send a request for a particular version of a processor
 
