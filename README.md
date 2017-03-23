@@ -6,15 +6,15 @@ The current version (0.2.0) now supports message streaming. As of March 23/2017,
 ### Key Features
 
 - Streaming: send messages to the bus as a stream and process messages as a stream.
-- Mutable composition: inject message receivers from any location in your project to decouple concerns such as validation and transformation.
-- Multiple message receivers are able to process, filter, and transform a particular message request in a controlled, composed order.
+- Mutable composition: inject message processors from any location in your project to decouple concerns such as validation and transformation.
+- Multiple message processors are able to process, filter, and transform a particular message request in a controlled, composed order.
 - The secure messaging exchange learns authorization automatically (with exercise).
-- Message receivers may be versioned according to the connected user. Receiver versions are dynamically substituted in the receiver list upon each user's request.
+- Message processors may be versioned according to the connected user. Processor versions are dynamically substituted in the processor list upon each user's request.
 - Property-based message patterns.
 - A clean, concise, yet expressive API
 - Few assumptions
 	- Universal/isomorphic (in the browser and in Node.js)
-	- The messaging scheme is totally open and configurable per receiver and is not necessary predetermined to use wildcards or regular expressions for pattern matching. But you can. The default and intended scheme is to match multiple property/value pairs within an object.
+	- The messaging scheme is totally open and configurable per processor and is not necessary predetermined to use wildcards or regular expressions for pattern matching. But you can. The default and intended scheme is to match multiple property/value pairs within an object.
 
 ### Getting Started
 
@@ -239,7 +239,7 @@ https://www.notion.so/Messaging-30c17b4e590f44689d9571f1f1f690c0
 	
 ### Filter the request to store any data by adding a creation date or modification date
 
-The property `before` inserts the receiver to execute before the data is stored.
+The property `before` inserts the processor to execute before the data is stored.
 
 	this.connection.process({
 		id : 'store-transform-date',
@@ -291,11 +291,11 @@ The property `before` inserts the receiver to execute before the data is stored.
 		}.bind(this)
 	});
 
-### Send a request for a particular version of a receiver
+### Send a request for a particular version of a processor
 
 ### Broadcast changes in real time after altering data in storage
 
-Add a receiver to run `after` data has been put in a storage collection.
+Add a processor to run `after` data has been put in a storage collection.
 
 ### Mutate a received request and resend to a new route pattern on the bus
 
