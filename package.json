@@ -13,7 +13,7 @@
     "express": "^4.15.2",
     "js-logger": "1.3.0",
     "minimist": "1.2.0",
-    "node-uuid": "^1.4.7",
+    "uuid": "^1.4.7",
     "proclaim": "3.4.4",
     "readable-stream": "^2.2.6",
     "serve-index": "1.8.0",
@@ -23,7 +23,6 @@
     "step": "^1.0.0",
     "tape": "4.6.3",
     "toposort": "^1.0.3",
-    "utf-8-validate": "^3.0.1",
     "uuid": "^3.0.1"
   },
   "devDependencies": {
@@ -39,10 +38,7 @@
     "message-bus",
     "message-broker"
   ],
-  "license" : {
-    "type" : "MIT",
-    "url" : "https://opensource.org/licenses/MIT"
-  },
+  "license" : "MIT",
   "repository" : {
     "type" : "git",
     "url" : "https://github.com/simplygreatwork/godsend.git"

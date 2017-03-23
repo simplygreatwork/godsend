@@ -1,9 +1,9 @@
 
-var uuid = require('node-uuid');
+var uuid = require('uuid');
 var Logger = require('js-logger');
-var Class = require('../../lib/godsend/Class');
-var Bus = require('../../lib/godsend/Bus');
-var Sequence = require('../../lib/godsend/Sequence');
+var Class = require('../../godsend.js').Class;
+var Bus = require('../../godsend.js').Bus;
+var Sequence = require('../../godsend.js').Sequence;
 
 Client = module.exports = Class.extend({
 	

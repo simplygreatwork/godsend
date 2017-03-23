@@ -1,5 +1,5 @@
 
-var uuid = require('node-uuid');
+var uuid = require('uuid');
 var Logger = require('js-logger');
 var Class = require('../../lib/godsend/Class');
 var Bus = require('../../lib/godsend/Bus');

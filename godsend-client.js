@@ -5627,814 +5627,14 @@ function hasOwnProperty(obj, prop) {
 },{"./support/isBuffer":28,"_process":8,"inherits":27}],30:[function(require,module,exports){
 
 module.exports = {
-	Bus : require('./lib/godsend/Bus'),
-	Class : require('./lib/godsend/Class'),
-	Sequence : require('./lib/godsend/Sequence'),
+	Bus : require('./src/Bus'),
+	Class : require('./src/Class'),
+	Sequence : require('./src/Sequence'),
 	// Logger : require('js-logger'),
 	uuid : require('uuid/v4')
 };
 
-},{"./lib/godsend/Bus":31,"./lib/godsend/Class":33,"./lib/godsend/Sequence":40,"uuid/v4":132}],31:[function(require,module,exports){
-
-var io = require('socket.io-client');
-var ss = require('socket.io-stream');
-var assert = require('proclaim');
-var Class = require('./Class');
-var Connection = require('./Connection');
-
-Bus = module.exports = Class.extend({
-	
-	initialize : function(properties) {
-		
-		Object.assign(this, properties);
-		this.connections = [];
-	},
-	
-	connect : function(properties) {
-		
-		//godsend.assert.credentials(properties.credentials);
-		var connection = new Connection({
-			address : this.address,
-			secure : this.secure,
-			credentials : properties.credentials
-		});
-		connection.connect(function(result) {
-			if (result.errors && result.errors.length > 0) {
-				connection.disconnect(function() {
-					connection = null;
-				});
-			} else {
-				this.connections.push(connection);
-			}
-			properties.responded({
-				connection : connection,
-				errors : result.errors
-			});
-		}.bind(this));
-	}
-});
-
-},{"./Class":33,"./Connection":34,"proclaim":45,"socket.io-client":70,"socket.io-stream":117}],32:[function(require,module,exports){
-
-Cache = module.exports = Class.extend({
-	
-	initialize : function(properties) {
-		
-		Object.assign(this, properties);
-		this.patterns = {};
-	},
-	
-	cache : function(pattern, processors) {
-		
-		this.put(pattern, processors);
-	},
-	
-	put : function(pattern, processors) {
-		
-		var key = JSON.stringify(pattern, Object.keys(pattern).sort())
-		this.patterns[key] = processors;
-	},
-	
-	get : function(pattern) {
-		
-		var key = JSON.stringify(pattern, Object.keys(pattern).sort())
-		return this.patterns[key];
-	}
-});
-
-},{}],33:[function(require,module,exports){
-
-Class = module.exports = {
-	
-	extend: function(properties) {
-		
-		var superProto = this.prototype || Class;
-		var proto = Object.create(superProto);
-		Class.copy(properties, proto);
-		var initializer = proto.initialize;
-		if (! (initializer instanceof Function)) {
-			initializer = function(properties) {
-				Object.assign(this, properties);
-			};
-		}
-		initializer.prototype = proto;
-		initializer.super = superProto;
-		initializer.extend = this.extend;
-		
-		return initializer;
-	},
-	
-	copy: function(source, target) {
-		
-		Object.getOwnPropertyNames(source).forEach(function(propName) {
-			Object.defineProperty(target, propName, Object.getOwnPropertyDescriptor(source, propName));
-		});
-		
-		return target;
-	}
-};
-
-},{}],34:[function(require,module,exports){
-
-var io = require('socket.io-client');
-var ss = require('socket.io-stream');
-var Class = require('./Class');
-var Stream = require('./Stream');
-var Transport = require('./Transport');
-var Register = require('./Register');
-var Cache = require('./Cache');
-var Process = require('./Process');
-var Request = require('./Request');
-var Response = require('./Response');
-
-Connection = module.exports = Class.extend({
-	
-	initialize : function(properties) {
-		
-		Object.assign(this, properties);
-		this.register = new Register();
-		this.cache = new Cache();
-		this.initializeTransport();
-	},
-	
-	initializeTransport : function() {
-		
-		this.transport = new Transport({
-			connection : this,
-			address : this.address,
-			secure : this.secure,
-		});
-	},
-	
-	connect : function(callback) {
-		
-		this.transport.connect(callback);
-	},
-	
-	disconnect : function(callback) {
-		
-		this.transport.disconnect(callback);
-	},
-	
-	write : function(pattern) {
-		
-		return this.transport.write(pattern);
-	},
-	
-	send : function(properties) {
-		
-		var result = {
-			objects : [],
-			errors : []
-		};
-		var stream = this.transport.send(properties.pattern);
-      stream.main.on('readable', function() {
-      	var object = stream.main.read();
-      	if (object && typeof object == 'object') {
-	      	result.objects.push(object);
-	      	if (properties.read) properties.read(object);
-         }
-      });
-      stream.error.on('readable', function() {
-      	var error = stream.error.read();
-      	if (error && typeof error == 'object') {
-	      	result.errors.push(error);
-	      	if (properties.error) properties.error(value);
-         }
-      });
-      stream.main.on('end', function() {
-      	if (properties.receive) properties.receive(result);
-      });
-      stream.error.on('end', function() {
-      	if (false && properties.receive) properties.receive(result);
-      });
-		if (properties.data) {
-			var data = properties.data;
-			if (! (data instanceof Array)) {
-				data = [data];
-			}
-			data.forEach(function(each) {
-				stream.write(each);
-			}.bind(this));
-			stream.end();
-		} else {
-	      if (properties.write) properties.write(stream);
-		}
-	},
-	
-	receive : function(request, streams) {
-		
-      streams.main.on('end', function() {
-			streams.main.process.end();
-      }.bind(this));
-      streams.main.on('readable', function() {
-      	var value = streams.main.read();
-         if (value) {
-				streams.main.process.write(value);
-         }
-      }.bind(this));
-		this.getProcess(request.pattern, streams, function(process) {
-			streams.main.process = process;
-		}.bind(this));
-	},
-	
-	getProcess : function(pattern, streams, callback) {
-		
-		var request = new Request({
-			pattern : pattern,
-			candidates : this.register.getProcessors()
-		});
-		request.prepare(function() {
-			var process =  new Process({
-				processors : request.processors,
-				streams : streams,
-				request : request,
-				response : new Response()
-			});
-			callback(process);
-		});
-	},
-	
-	process : function(processor) {
-		
-		this.register.addProcessor(processor);
-	}
-});
-
-},{"./Cache":32,"./Class":33,"./Process":35,"./Register":37,"./Request":38,"./Response":39,"./Stream":41,"./Transport":42,"socket.io-client":70,"socket.io-stream":117}],35:[function(require,module,exports){
-
-var Class = require('./Class');
-var Processor = require('./Processor');
-
-Process = module.exports = Class.extend({
-	
-	initialize : function(properties) {
-		
-		Object.assign(this, properties);
-		this.assemble();
-	},
-	
-	assemble : function() {
-		
-		this.processors.forEach(function(each, index) {
-			this.processors[index] = new Processor({
-				id : each.id,
-				weight : each.weight,
-				process : each.run,
-				errors : this.streams.error,
-				request : this.request,
-				response : this.response
-			})
-		}.bind(this));
-		if (this.processors.length === 0) {
-			this.processors.push(new Processor({
-				process : function(stream) {
-					stream.next();
-				}
-			}));
-		}
-		this.processors.push(this.streams.main);
-		this.processors.forEach(function(each, index) {
-			if (index > 0) {
-				this.processors[index - 1].pipe(this.processors[index])
-			}
-		}.bind(this));
-	},
-	
-	write : function(data) {
-		
-		this.processors[0].write(data);
-	},
-	
-	end : function() {
-		
-		this.processors[0].end();
-	}
-});
-
-},{"./Class":33,"./Processor":36}],36:[function(require,module,exports){
-
-var Transform = require('stream').Transform || require('readable-stream').Transform;
-var util = require('util');
-
-function Processor(properties) {
-	
-	Transform.call(this, {
-		objectMode : true
-	});
-	Object.assign(this, properties);
-	this.expressive = this.expressive ? undefined : true;
-	this.initializeTransform();
-	this.on('error', function(error) {
-		console.error('error: ' + error);
-	}.bind(this));
-}
-
-util.inherits(Processor, Transform);
-
-Object.assign(Processor.prototype, {
-	
-	initializeTransform : function() {
-		
-		if (this.expressive) {
-			this._transform = function(chunk, encoding, next) {
-				var stream = {
-					request : this.request,
-					response : this.response,
-					object : chunk,
-					encoding : encoding,
-					next : next,
-					push : this.push.bind(this),
-					err : this.err.bind(this)
-				};
-				this.process(stream);
-			};
-		} else {
-			this._transform = function(chunk, encoding, next) {
-				this.process(chunk, encoding, next, this.stream);
-			};
-		}
-	},
-	
-	err : function(error) {
-		
-		this.errors.write(error);
-	}
-});
-
-module.exports = Processor;
-
-},{"readable-stream":69,"stream":25,"util":29}],37:[function(require,module,exports){
-(function (process){
-
-var toposort = require('toposort');
-var uuid = require('uuid/v4');
-var Class = require('./Class');
-var Utility = require('./Utility');
-
-Register = module.exports = Class.extend({
-	
-	initialize : function(properties) {
-		
-		Object.assign(this, properties);
-		this.processors = [];
-		this.cache = {};
-	},
-	
-	addProcessor : function(processor) {
-		
-		this.ensureProcessor(processor);
-		this.processors.push(processor);
-		this.sortProcessorsByVersion(this.processors);
-		this.checkConflicts();
-		this.cache = {};												// important: MUST invalidate any cached processors when adding
-	},
-	
-	ensureProcessor : function(processor) {
-		
-		processor.id = Utility.ensure(processor.id, uuid());
-		processor.weight = Utility.ensure(processor.weight, 0);
-		if (typeof processor.version != 'object') {
-			processor.version = {
-				name : processor.version,
-				'default' : false
-			}
-		}
-		processor.version.name = Utility.ensure(processor.version.name, ' unversioned ');
-	},
-	
-	getProcessors : function(versions) {
-		
-		var result = null;
-		versions = versions || {};
-		var key = Utility.stringify(versions);
-		if (this.cache[key]) {
-			result = this.cache[key];
-		} else {
-			result = this.assembleProcessors(versions);
-			this.cache[key] = result;
-		}
-		return result;
-	},
-	
-	assembleProcessors : function(versions) {
-		
-		var result = [];
-		var previous = null;
-		var version = {
-			current : null,
-			applied : null
-		};
-		this.processors.forEach(function(each) {
-			if (previous == null) {
-				result.push(each);
-				version.applied = null;
-			} else if (previous.id != each.id) {
-				result.push(each);
-				version.applied = null;
-			}
-			version.current = versions[each.id];
-			if ((version.current) && (each.version.name == version.current)) {
-				result[result.length - 1] = each;
-				version.applied = version.current;
-			}
-			if ((version.applied == null) && (each.version.default === true)) {
-				result[result.length - 1] = each;
-			}
-			previous = each;
-		}.bind(this));
-		result = this.sortProcessorsByExecution(result);
-		return result;
-	},
-	
-	sortProcessorsByVersion : function(processors) {						// should be sorted by id, then version ascending
-		
-		processors.sort(function(a, b) {
-			var aa = a['id'] + a['version'].name;
-			var bb = b['id'] + b['version'].name;
-			if (aa > bb) {
-				return 1;
-			} else if (aa < bb) {
-				return -1;
-			} else {
-				return 0;
-			}
-		});
-	},
-	
-	sortProcessorsByExecution : function(processors) {		// rethink this entire algorithm
-																			// specifically the re-insertion of befores/afters
-		processors.forEach(function(each, index) {			// if a processor references "before", set it's weight to zero
-			if (each.before || each.after) each.weight = 0;
-		}.bind(this));
-		processors.sort(function(a, b) {							// sort by weights
-			return a.weight - b.weight;
-		}.bind(this));
-		var graph = [];
-		processors.forEach(function(each, index) {
-			if (each.before) {
-				graph.push([each, this.findProcessor(processors, each.before)]);
-			} else if (each.after) {
-				graph.push([this.findProcessor(processors, each.after), each]);
-			}
-		}.bind(this));
-		var selection = toposort(graph);							// only sort "befores/afters" by themselves
-		selection.forEach(function(each) {						// else potential for cyclic hell
-			var index = processors.indexOf(each);				// issue: consider ensuring that all "before/after" ref weights are identical
-			if (index > -1) processors.splice(index, 1);
-		}.bind(this));
-		var result = [];
-		if (processors.length > 0) {
-			for (var i = 0; i < processors.length; i++) {		// and then reinsert the "befores/afters" back into the list
-				this.getMatchingWeights(selection, processors[i].weight).forEach(function(each) {
-					result.push(each);
-				}.bind(this));
-				result.push(processors[i]);
-			}
-		} else {
-			result = selection;
-		}
-		return result;
-	},
-	
-	getMatchingWeights : function(selection, weight) {
-		
-		var result = [];
-		for (var i = selection.length - 1; i >= 0; i--) {
-			if (selection[i].weight == weight) {
-				var select = selection.splice(i, 1);
-				result.unshift(select[0]);
-			}
-		}
-		return result;
-	},
-	
-	findProcessor : function(processors, id) {
-		
-		var result = null;
-		processors.forEach(function(each) {
-			if (each.id == id) {
-				result = each;
-			}
-		});
-		return result;
-	},
-	
-	checkConflicts : function() {
-		
-		var conflicts = [];
-		var previous = null;
-		this.processors.forEach(function(each) {
-			if ((previous) && (previous.id + previous.version.name == each.id + each.version.name)) {
-				conflicts.push(each.id);
-			}
-			previous = each;
-		}.bind(this));
-		if (conflicts.length > 0) {
-			console.error('Error: The processor list contains versioning conflicts: ' + JSON.stringify(conflicts, null, 2));
-			process.exit();
-		}
-	}
-});
-
-}).call(this,require('_process'))
-},{"./Class":33,"./Utility":43,"_process":8,"toposort":129,"uuid/v4":132}],38:[function(require,module,exports){
-
-var Class = require('./Class');
-
-Request = module.exports = Class.extend({
-	
-	initialize : function(properties) {
-		
-		Object.assign(this, properties);
-		this.processors = [];
-		this.index = -1;
-		this.cacheable = true;
-	},
-	
-	prepare : function(callback) {
-		
-		this.callback = callback;
-		this.next();
-	},
-	
-	next : function() {
-		
-		this.index++;
-		if (this.index < this.candidates.length) {
-			this.processor = this.candidates[this.index];
-			if (this.processor.cache === false) {
-				this.cacheable = false;
-			}
-			this.processor.on(this);
-		} else {
-			this.callback();
-		}
-	},
-	
-	accept : function() {
-		
-		if (arguments[0]) {
-			if (this.matches(arguments[0])) {
-				this.accept();
-			} else {
-				this.skip();
-			}
-		} else {
-			this.processors.push(this.processor);
-			this.next();
-		}
-	},
-	
-	skip : function() {
-		
-		this.next();
-	},
-	
-	matches : function(properties) {
-		
-		return Utility.matchesProperties(this.pattern, properties);
-	}
-});
-
-},{"./Class":33}],39:[function(require,module,exports){
-
-var Class = require('./Class');
-
-Response = module.exports = Class.extend({
-	
-	initialize : function(properties) {
-		
-		Object.assign(this, properties);
-	}
-});
-
-},{"./Class":33}],40:[function(require,module,exports){
-
-var Step = require('step');
-
-Sequence = module.exports = {
-	
-	start : function() {
-   	
-		var next = null;
-		var args = Array.prototype.slice.call(arguments);
-		args.unshift(function() {
-			next = function() {
-				setTimeout(function() {
-					this();
-				}.bind(this), 20);
-			}.bind(this);
-			next();
-		});
-		
-		Step.apply(this, args);
-		
-		return {
-			next : next
-		};
-	}
-};
-
-},{"step":128}],41:[function(require,module,exports){
-
-var Class = require('./Class');
-var io = require('socket.io-client');
-var ss = require('socket.io-stream');
-
-Stream = module.exports = Class.extend({
-	
-	initialize : function(properties) {
-		
-		Object.assign(this, properties);
-		this.main = ss.createStream({
-			highWaterMark : 1024,
-			objectMode : true,
-			allowHalfOpen : true
-		});
-		this.error = ss.createStream({
-			highWaterMark : 1024,
-			objectMode : true,
-			allowHalfOpen : true
-		});
-	},
-	
-	send : function(pattern) {
-		
-		this.socket.emit('send', {
-			pattern : pattern
-		}, {
-			main : this.main,
-			error : this.error
-		});
-	},
-	
-	write : function(data, callback) {
-		
-      this.main.write(data, callback);
-	},
-	
-	end : function() {
-		
-		this.main.end();
-	}
-});
-
-},{"./Class":33,"socket.io-client":70,"socket.io-stream":117}],42:[function(require,module,exports){
-
-var io = require('socket.io-client');
-var ss = require('socket.io-stream');
-var Logger = require('js-logger');
-
-Transport = module.exports = Class.extend({
-	
-	initialize : function(properties) {
-		
-		Object.assign(this, properties);
-	},
-	
-	connect : function(callback) {
-		
-		this.socket = io.connect(this.address, {
-		  secure : this.secure || false,
-		  reconnection : true,
-		  reconnectionDelay : 100,
-		  reconnectionAttempts : 10
-		});
-		this.socket.on('connect', function() {
-			if (this.connection.credentials) {
-				this.socket.emit('authenticate', this.connection.credentials, function(result) {
-					if (result && result.value && result.value.authentic) {
-						var username = this.connection.credentials.username;
-						Logger.get('transport').log('Connected to the broker as "' + username + '".');
-					}
-					callback(result);
-		      }.bind(this));
-			} else {
-				Logger.get('transport').log('Connected to the broker.');
-				callback({
-					errors : []
-				});
-			}
-		}.bind(this));
-		this.socket.on('connect_error', function(error) {
-			Logger.get('transport').error('connect_error: ' + error);
-			callback(error);
-		});
-		this.socket = ss(this.socket);
-      this.socket.on('receive', function(request, stream) {
-			this.receive(request, stream);
-      }.bind(this));
-	},
-	
-	disconnect : function(callback) {
-		
-		console.log('Transport.disconnect');
-		callback();
-	},
-	
-	send : function(pattern) {
-		
-		var stream = new Stream({
-			socket : this.socket,
-			pattern : pattern
-		});
-		stream.send(pattern);
-      return stream;
-	},
-	
-	receive : function(request, stream) {
-      
-		this.connection.receive(request, stream);
-	}
-});
-
-},{"js-logger":44,"socket.io-client":70,"socket.io-stream":117}],43:[function(require,module,exports){
-
-Utility = module.exports = {
-	
-	digest : function(string) {
-		
-		return string;
-	},
-	
-	digesting : function(string) {
-		
-		var md = forge.md.sha1.create();
-		md.update(string);
-		return md.digest().toHex();
-	},
-	
-	matchesPartially : function(pattern, patterns) {						// really need to study this in depth (all the limits)
-		
-		var result = false;
-		patterns.forEach(function(each) {
-			var match = true;
-			for (var property in each) {
-				if (each[property] != pattern[property]) {
-					match = false;
-				}
-			}
-			if (match === true) {
-				result = true;
-			}
-		}.bind(this));
-		return result;
-	},
-	
-	matchesStrictly : function(pattern, patterns) {
-		
-		var result = false;
-		var string = Utility.stringify(pattern);
-		patterns.forEach(function(each) {
-			if (Utility.stringify(each) == string) {
-				result = true;
-			}
-		}.bind(this));
-		return result;
-	},
-	
-	matchesProperties : function(pattern, properties) {
-		
-		var result = true;
-		var property = null;
-		for (property in properties) {
-			if (pattern[property] != properties[property]) {
-				result = false;
-			}
-		}
-		return result;
-	},
-	
-	stringify : function(object) {
-		
-		return JSON.stringify(object, Object.keys(object).sort())
-	},
-	
-	ensure : function(value, substitute) {
-		
-		if (value === undefined) {
-			return substitute;
-		} else if (value === null) {
-			return substitute;
-		} else {
-			return value;
-		}
-	},
-	
-	isHandled : function(result) {
-		
-		var handled = false;
-		if (result.value) {
-			if (JSON.stringify(result.value) != '{}') {
-				handled = true;
-			}
-		}
-		return handled;
-	}
-};
-
-},{}],44:[function(require,module,exports){
+},{"./src/Bus":120,"./src/Class":122,"./src/Sequence":129,"uuid/v4":119}],31:[function(require,module,exports){
 /*!
  * js-logger - http://github.com/jonnyreeves/js-logger
  * Jonny Reeves, http://jonnyreeves.co.uk/
@@ -6693,7 +5893,7 @@ Utility = module.exports = {
 	}
 }(this));
 
-},{}],45:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 (function (global){
 (function (root) {
     'use strict';
@@ -7268,7 +6468,7 @@ Utility = module.exports = {
 }(this));
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"util-inspect":46}],46:[function(require,module,exports){
+},{"util-inspect":33}],33:[function(require,module,exports){
 
 /**
  * Module dependencies.
@@ -7686,7 +6886,7 @@ function _extend(origin, add) {
   return origin;
 }
 
-},{"array-map":47,"array-reduce":48,"foreach":49,"indexof":50,"isarray":51,"json3":52,"object-keys":54}],47:[function(require,module,exports){
+},{"array-map":34,"array-reduce":35,"foreach":36,"indexof":37,"isarray":38,"json3":39,"object-keys":41}],34:[function(require,module,exports){
 module.exports = function (xs, f) {
     if (xs.map) return xs.map(f);
     var res = [];
@@ -7699,7 +6899,7 @@ module.exports = function (xs, f) {
 
 var hasOwn = Object.prototype.hasOwnProperty;
 
-},{}],48:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 var hasOwn = Object.prototype.hasOwnProperty;
 
 module.exports = function (xs, f, acc) {
@@ -7719,7 +6919,7 @@ module.exports = function (xs, f, acc) {
     return acc;
 };
 
-},{}],49:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 
 var hasOwn = Object.prototype.hasOwnProperty;
 var toString = Object.prototype.toString;
@@ -7743,7 +6943,7 @@ module.exports = function forEach (obj, fn, ctx) {
 };
 
 
-},{}],50:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 
 var indexOf = [].indexOf;
 
@@ -7754,12 +6954,12 @@ module.exports = function(arr, obj){
   }
   return -1;
 };
-},{}],51:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 module.exports = Array.isArray || function (arr) {
   return Object.prototype.toString.call(arr) == '[object Array]';
 };
 
-},{}],52:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 (function (global){
 /*! JSON v3.3.0 | http://bestiejs.github.io/json3 | Copyright 2012-2014, Kit Cambridge | http://kit.mit-license.org */
 ;(function (root) {
@@ -8660,7 +7860,7 @@ module.exports = Array.isArray || function (arr) {
 }(this));
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],53:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 "use strict";
 
 var hasOwn = Object.prototype.hasOwnProperty;
@@ -8700,7 +7900,7 @@ module.exports = function forEach(obj, fn) {
 };
 
 
-},{}],54:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 "use strict";
 
 // modified from https://github.com/es-shims/es5-shim
@@ -8768,7 +7968,7 @@ keysShim.shim = function shimObjectKeys() {
 module.exports = keysShim;
 
 
-},{"./foreach":53,"./isArguments":55}],55:[function(require,module,exports){
+},{"./foreach":40,"./isArguments":42}],42:[function(require,module,exports){
 "use strict";
 
 var toString = Object.prototype.toString;
@@ -8788,21 +7988,21 @@ module.exports = function isArguments(value) {
 };
 
 
-},{}],56:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 arguments[4][10][0].apply(exports,arguments)
-},{"./_stream_readable":58,"./_stream_writable":60,"core-util-is":63,"dup":10,"inherits":64,"process-nextick-args":66}],57:[function(require,module,exports){
+},{"./_stream_readable":45,"./_stream_writable":47,"core-util-is":50,"dup":10,"inherits":51,"process-nextick-args":53}],44:[function(require,module,exports){
 arguments[4][11][0].apply(exports,arguments)
-},{"./_stream_transform":59,"core-util-is":63,"dup":11,"inherits":64}],58:[function(require,module,exports){
+},{"./_stream_transform":46,"core-util-is":50,"dup":11,"inherits":51}],45:[function(require,module,exports){
 arguments[4][12][0].apply(exports,arguments)
-},{"./_stream_duplex":56,"./internal/streams/BufferList":61,"_process":8,"buffer":2,"buffer-shims":62,"core-util-is":63,"dup":12,"events":5,"inherits":64,"isarray":65,"process-nextick-args":66,"string_decoder/":67,"util":1}],59:[function(require,module,exports){
+},{"./_stream_duplex":43,"./internal/streams/BufferList":48,"_process":8,"buffer":2,"buffer-shims":49,"core-util-is":50,"dup":12,"events":5,"inherits":51,"isarray":52,"process-nextick-args":53,"string_decoder/":54,"util":1}],46:[function(require,module,exports){
 arguments[4][13][0].apply(exports,arguments)
-},{"./_stream_duplex":56,"core-util-is":63,"dup":13,"inherits":64}],60:[function(require,module,exports){
+},{"./_stream_duplex":43,"core-util-is":50,"dup":13,"inherits":51}],47:[function(require,module,exports){
 arguments[4][14][0].apply(exports,arguments)
-},{"./_stream_duplex":56,"_process":8,"buffer":2,"buffer-shims":62,"core-util-is":63,"dup":14,"events":5,"inherits":64,"process-nextick-args":66,"util-deprecate":68}],61:[function(require,module,exports){
+},{"./_stream_duplex":43,"_process":8,"buffer":2,"buffer-shims":49,"core-util-is":50,"dup":14,"events":5,"inherits":51,"process-nextick-args":53,"util-deprecate":55}],48:[function(require,module,exports){
 arguments[4][15][0].apply(exports,arguments)
-},{"buffer":2,"buffer-shims":62,"dup":15}],62:[function(require,module,exports){
+},{"buffer":2,"buffer-shims":49,"dup":15}],49:[function(require,module,exports){
 arguments[4][16][0].apply(exports,arguments)
-},{"buffer":2,"dup":16}],63:[function(require,module,exports){
+},{"buffer":2,"dup":16}],50:[function(require,module,exports){
 (function (Buffer){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -8913,19 +8113,19 @@ function objectToString(o) {
 }
 
 }).call(this,{"isBuffer":require("../../../../../../../.nvm/versions/node/v4.6.1/lib/node_modules/browserify/node_modules/insert-module-globals/node_modules/is-buffer/index.js")})
-},{"../../../../../../../.nvm/versions/node/v4.6.1/lib/node_modules/browserify/node_modules/insert-module-globals/node_modules/is-buffer/index.js":7}],64:[function(require,module,exports){
+},{"../../../../../../../.nvm/versions/node/v4.6.1/lib/node_modules/browserify/node_modules/insert-module-globals/node_modules/is-buffer/index.js":7}],51:[function(require,module,exports){
 arguments[4][6][0].apply(exports,arguments)
-},{"dup":6}],65:[function(require,module,exports){
+},{"dup":6}],52:[function(require,module,exports){
 arguments[4][18][0].apply(exports,arguments)
-},{"dup":18}],66:[function(require,module,exports){
+},{"dup":18}],53:[function(require,module,exports){
 arguments[4][19][0].apply(exports,arguments)
-},{"_process":8,"dup":19}],67:[function(require,module,exports){
+},{"_process":8,"dup":19}],54:[function(require,module,exports){
 arguments[4][26][0].apply(exports,arguments)
-},{"buffer":2,"dup":26}],68:[function(require,module,exports){
+},{"buffer":2,"dup":26}],55:[function(require,module,exports){
 arguments[4][20][0].apply(exports,arguments)
-},{"dup":20}],69:[function(require,module,exports){
+},{"dup":20}],56:[function(require,module,exports){
 arguments[4][22][0].apply(exports,arguments)
-},{"./lib/_stream_duplex.js":56,"./lib/_stream_passthrough.js":57,"./lib/_stream_readable.js":58,"./lib/_stream_transform.js":59,"./lib/_stream_writable.js":60,"_process":8,"dup":22}],70:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":43,"./lib/_stream_passthrough.js":44,"./lib/_stream_readable.js":45,"./lib/_stream_transform.js":46,"./lib/_stream_writable.js":47,"_process":8,"dup":22}],57:[function(require,module,exports){
 
 /**
  * Module dependencies.
@@ -9036,7 +8236,7 @@ exports.connect = lookup;
 exports.Manager = require('./manager');
 exports.Socket = require('./socket');
 
-},{"./manager":71,"./socket":73,"./url":74,"debug":78,"socket.io-parser":108}],71:[function(require,module,exports){
+},{"./manager":58,"./socket":60,"./url":61,"debug":65,"socket.io-parser":95}],58:[function(require,module,exports){
 
 /**
  * Module dependencies.
@@ -9598,7 +8798,7 @@ Manager.prototype.onreconnect = function () {
   this.emitAll('reconnect', attempt);
 };
 
-},{"./on":72,"./socket":73,"backo2":75,"component-bind":76,"component-emitter":77,"debug":78,"engine.io-client":81,"indexof":105,"socket.io-parser":108}],72:[function(require,module,exports){
+},{"./on":59,"./socket":60,"backo2":62,"component-bind":63,"component-emitter":64,"debug":65,"engine.io-client":68,"indexof":92,"socket.io-parser":95}],59:[function(require,module,exports){
 
 /**
  * Module exports.
@@ -9624,7 +8824,7 @@ function on (obj, ev, fn) {
   };
 }
 
-},{}],73:[function(require,module,exports){
+},{}],60:[function(require,module,exports){
 
 /**
  * Module dependencies.
@@ -10045,7 +9245,7 @@ Socket.prototype.compress = function (compress) {
   return this;
 };
 
-},{"./on":72,"component-bind":76,"component-emitter":77,"debug":78,"has-binary":103,"socket.io-parser":108,"to-array":116}],74:[function(require,module,exports){
+},{"./on":59,"component-bind":63,"component-emitter":64,"debug":65,"has-binary":90,"socket.io-parser":95,"to-array":103}],61:[function(require,module,exports){
 (function (global){
 
 /**
@@ -10124,7 +9324,7 @@ function url (uri, loc) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"debug":78,"parseuri":106}],75:[function(require,module,exports){
+},{"debug":65,"parseuri":93}],62:[function(require,module,exports){
 
 /**
  * Expose `Backoff`.
@@ -10211,7 +9411,7 @@ Backoff.prototype.setJitter = function(jitter){
 };
 
 
-},{}],76:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
 /**
  * Slice reference.
  */
@@ -10236,7 +9436,7 @@ module.exports = function(obj, fn){
   }
 };
 
-},{}],77:[function(require,module,exports){
+},{}],64:[function(require,module,exports){
 
 /**
  * Expose `Emitter`.
@@ -10401,7 +9601,7 @@ Emitter.prototype.hasListeners = function(event){
   return !! this.listeners(event).length;
 };
 
-},{}],78:[function(require,module,exports){
+},{}],65:[function(require,module,exports){
 (function (process){
 
 /**
@@ -10582,7 +9782,7 @@ function localstorage(){
 }
 
 }).call(this,require('_process'))
-},{"./debug":79,"_process":8}],79:[function(require,module,exports){
+},{"./debug":66,"_process":8}],66:[function(require,module,exports){
 
 /**
  * This is the common logic for both the Node.js and web browser
@@ -10784,7 +9984,7 @@ function coerce(val) {
   return val;
 }
 
-},{"ms":80}],80:[function(require,module,exports){
+},{"ms":67}],67:[function(require,module,exports){
 /**
  * Helpers.
  */
@@ -10935,11 +10135,11 @@ function plural(ms, n, name) {
   return Math.ceil(ms / n) + ' ' + name + 's'
 }
 
-},{}],81:[function(require,module,exports){
+},{}],68:[function(require,module,exports){
 
 module.exports = require('./lib/index');
 
-},{"./lib/index":82}],82:[function(require,module,exports){
+},{"./lib/index":69}],69:[function(require,module,exports){
 
 module.exports = require('./socket');
 
@@ -10951,7 +10151,7 @@ module.exports = require('./socket');
  */
 module.exports.parser = require('engine.io-parser');
 
-},{"./socket":83,"engine.io-parser":92}],83:[function(require,module,exports){
+},{"./socket":70,"engine.io-parser":79}],70:[function(require,module,exports){
 (function (global){
 /**
  * Module dependencies.
@@ -11693,7 +10893,7 @@ Socket.prototype.filterUpgrades = function (upgrades) {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./transport":84,"./transports/index":85,"component-emitter":77,"debug":78,"engine.io-parser":92,"indexof":105,"parsejson":100,"parseqs":101,"parseuri":106}],84:[function(require,module,exports){
+},{"./transport":71,"./transports/index":72,"component-emitter":64,"debug":65,"engine.io-parser":79,"indexof":92,"parsejson":87,"parseqs":88,"parseuri":93}],71:[function(require,module,exports){
 /**
  * Module dependencies.
  */
@@ -11852,7 +11052,7 @@ Transport.prototype.onClose = function () {
   this.emit('close');
 };
 
-},{"component-emitter":77,"engine.io-parser":92}],85:[function(require,module,exports){
+},{"component-emitter":64,"engine.io-parser":79}],72:[function(require,module,exports){
 (function (global){
 /**
  * Module dependencies
@@ -11909,7 +11109,7 @@ function polling (opts) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./polling-jsonp":86,"./polling-xhr":87,"./websocket":89,"xmlhttprequest-ssl":90}],86:[function(require,module,exports){
+},{"./polling-jsonp":73,"./polling-xhr":74,"./websocket":76,"xmlhttprequest-ssl":77}],73:[function(require,module,exports){
 (function (global){
 
 /**
@@ -12144,7 +11344,7 @@ JSONPPolling.prototype.doWrite = function (data, fn) {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./polling":88,"component-inherit":91}],87:[function(require,module,exports){
+},{"./polling":75,"component-inherit":78}],74:[function(require,module,exports){
 (function (global){
 /**
  * Module requirements.
@@ -12572,7 +11772,7 @@ function unloadHandler () {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./polling":88,"component-emitter":77,"component-inherit":91,"debug":78,"xmlhttprequest-ssl":90}],88:[function(require,module,exports){
+},{"./polling":75,"component-emitter":64,"component-inherit":78,"debug":65,"xmlhttprequest-ssl":77}],75:[function(require,module,exports){
 /**
  * Module dependencies.
  */
@@ -12819,7 +12019,7 @@ Polling.prototype.uri = function () {
   return schema + '://' + (ipv6 ? '[' + this.hostname + ']' : this.hostname) + port + this.path + query;
 };
 
-},{"../transport":84,"component-inherit":91,"debug":78,"engine.io-parser":92,"parseqs":101,"xmlhttprequest-ssl":90,"yeast":102}],89:[function(require,module,exports){
+},{"../transport":71,"component-inherit":78,"debug":65,"engine.io-parser":79,"parseqs":88,"xmlhttprequest-ssl":77,"yeast":89}],76:[function(require,module,exports){
 (function (global){
 /**
  * Module dependencies.
@@ -13108,7 +12308,7 @@ WS.prototype.check = function () {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"../transport":84,"component-inherit":91,"debug":78,"engine.io-parser":92,"parseqs":101,"ws":1,"yeast":102}],90:[function(require,module,exports){
+},{"../transport":71,"component-inherit":78,"debug":65,"engine.io-parser":79,"parseqs":88,"ws":1,"yeast":89}],77:[function(require,module,exports){
 (function (global){
 // browser shim for xmlhttprequest module
 
@@ -13149,7 +12349,7 @@ module.exports = function (opts) {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"has-cors":99}],91:[function(require,module,exports){
+},{"has-cors":86}],78:[function(require,module,exports){
 
 module.exports = function(a, b){
   var fn = function(){};
@@ -13157,7 +12357,7 @@ module.exports = function(a, b){
   a.prototype = new fn;
   a.prototype.constructor = a;
 };
-},{}],92:[function(require,module,exports){
+},{}],79:[function(require,module,exports){
 (function (global){
 /**
  * Module dependencies.
@@ -13770,7 +12970,7 @@ exports.decodePayloadAsBinary = function (data, binaryType, callback) {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./keys":93,"after":94,"arraybuffer.slice":95,"base64-arraybuffer":96,"blob":97,"has-binary":103,"wtf-8":98}],93:[function(require,module,exports){
+},{"./keys":80,"after":81,"arraybuffer.slice":82,"base64-arraybuffer":83,"blob":84,"has-binary":90,"wtf-8":85}],80:[function(require,module,exports){
 
 /**
  * Gets the keys for an object.
@@ -13791,7 +12991,7 @@ module.exports = Object.keys || function keys (obj){
   return arr;
 };
 
-},{}],94:[function(require,module,exports){
+},{}],81:[function(require,module,exports){
 module.exports = after
 
 function after(count, callback, err_cb) {
@@ -13821,7 +13021,7 @@ function after(count, callback, err_cb) {
 
 function noop() {}
 
-},{}],95:[function(require,module,exports){
+},{}],82:[function(require,module,exports){
 /**
  * An abstraction for slicing an arraybuffer even when
  * ArrayBuffer.prototype.slice is not supported
@@ -13852,7 +13052,7 @@ module.exports = function(arraybuffer, start, end) {
   return result.buffer;
 };
 
-},{}],96:[function(require,module,exports){
+},{}],83:[function(require,module,exports){
 /*
  * base64-arraybuffer
  * https://github.com/niklasvh/base64-arraybuffer
@@ -13921,7 +13121,7 @@ module.exports = function(arraybuffer, start, end) {
   };
 })();
 
-},{}],97:[function(require,module,exports){
+},{}],84:[function(require,module,exports){
 (function (global){
 /**
  * Create a blob builder even when vendor prefixes exist
@@ -14021,7 +13221,7 @@ module.exports = (function() {
 })();
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],98:[function(require,module,exports){
+},{}],85:[function(require,module,exports){
 (function (global){
 /*! https://mths.be/wtf8 v1.0.0 by @mathias */
 ;(function(root) {
@@ -14259,7 +13459,7 @@ module.exports = (function() {
 }(this));
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],99:[function(require,module,exports){
+},{}],86:[function(require,module,exports){
 
 /**
  * Module exports.
@@ -14278,7 +13478,7 @@ try {
   module.exports = false;
 }
 
-},{}],100:[function(require,module,exports){
+},{}],87:[function(require,module,exports){
 (function (global){
 /**
  * JSON parse.
@@ -14313,7 +13513,7 @@ module.exports = function parsejson(data) {
   }
 };
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],101:[function(require,module,exports){
+},{}],88:[function(require,module,exports){
 /**
  * Compiles a querystring
  * Returns string representation of the object
@@ -14352,7 +13552,7 @@ exports.decode = function(qs){
   return qry;
 };
 
-},{}],102:[function(require,module,exports){
+},{}],89:[function(require,module,exports){
 'use strict';
 
 var alphabet = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_'.split('')
@@ -14422,7 +13622,7 @@ yeast.encode = encode;
 yeast.decode = decode;
 module.exports = yeast;
 
-},{}],103:[function(require,module,exports){
+},{}],90:[function(require,module,exports){
 (function (global){
 
 /*
@@ -14485,11 +13685,11 @@ function hasBinary(data) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"isarray":104}],104:[function(require,module,exports){
-arguments[4][51][0].apply(exports,arguments)
-},{"dup":51}],105:[function(require,module,exports){
-arguments[4][50][0].apply(exports,arguments)
-},{"dup":50}],106:[function(require,module,exports){
+},{"isarray":91}],91:[function(require,module,exports){
+arguments[4][38][0].apply(exports,arguments)
+},{"dup":38}],92:[function(require,module,exports){
+arguments[4][37][0].apply(exports,arguments)
+},{"dup":37}],93:[function(require,module,exports){
 /**
  * Parses an URI
  *
@@ -14530,7 +13730,7 @@ module.exports = function parseuri(str) {
     return uri;
 };
 
-},{}],107:[function(require,module,exports){
+},{}],94:[function(require,module,exports){
 (function (global){
 /*global Blob,File*/
 
@@ -14675,7 +13875,7 @@ exports.removeBlobs = function(data, callback) {
 };
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./is-buffer":109,"isarray":114}],108:[function(require,module,exports){
+},{"./is-buffer":96,"isarray":101}],95:[function(require,module,exports){
 
 /**
  * Module dependencies.
@@ -15081,7 +14281,7 @@ function error(data){
   };
 }
 
-},{"./binary":107,"./is-buffer":109,"component-emitter":110,"debug":111,"json3":115}],109:[function(require,module,exports){
+},{"./binary":94,"./is-buffer":96,"component-emitter":97,"debug":98,"json3":102}],96:[function(require,module,exports){
 (function (global){
 
 module.exports = isBuf;
@@ -15098,7 +14298,7 @@ function isBuf(obj) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],110:[function(require,module,exports){
+},{}],97:[function(require,module,exports){
 
 /**
  * Expose `Emitter`.
@@ -15264,7 +14464,7 @@ Emitter.prototype.hasListeners = function(event){
   return !! this.listeners(event).length;
 };
 
-},{}],111:[function(require,module,exports){
+},{}],98:[function(require,module,exports){
 
 /**
  * This is the web browser implementation of `debug()`.
@@ -15434,7 +14634,7 @@ function localstorage(){
   } catch (e) {}
 }
 
-},{"./debug":112}],112:[function(require,module,exports){
+},{"./debug":99}],99:[function(require,module,exports){
 
 /**
  * This is the common logic for both the Node.js and web browser
@@ -15633,7 +14833,7 @@ function coerce(val) {
   return val;
 }
 
-},{"ms":113}],113:[function(require,module,exports){
+},{"ms":100}],100:[function(require,module,exports){
 /**
  * Helpers.
  */
@@ -15760,9 +14960,9 @@ function plural(ms, n, name) {
   return Math.ceil(ms / n) + ' ' + name + 's';
 }
 
-},{}],114:[function(require,module,exports){
-arguments[4][51][0].apply(exports,arguments)
-},{"dup":51}],115:[function(require,module,exports){
+},{}],101:[function(require,module,exports){
+arguments[4][38][0].apply(exports,arguments)
+},{"dup":38}],102:[function(require,module,exports){
 (function (global){
 /*! JSON v3.3.2 | http://bestiejs.github.io/json3 | Copyright 2012-2014, Kit Cambridge | http://kit.mit-license.org */
 ;(function () {
@@ -16668,7 +15868,7 @@ arguments[4][51][0].apply(exports,arguments)
 }).call(this);
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],116:[function(require,module,exports){
+},{}],103:[function(require,module,exports){
 module.exports = toArray
 
 function toArray(list, index) {
@@ -16683,12 +15883,12 @@ function toArray(list, index) {
     return array
 }
 
-},{}],117:[function(require,module,exports){
+},{}],104:[function(require,module,exports){
 
 module.exports = require('./lib');
 
 
-},{"./lib":119}],118:[function(require,module,exports){
+},{"./lib":106}],105:[function(require,module,exports){
 (function (Buffer){
 var util = require('util');
 var Readable = require('stream').Readable;
@@ -16759,7 +15959,7 @@ BlobReadStream.prototype._onerror = function(e) {
 
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":2,"component-bind":124,"stream":25,"util":29}],119:[function(require,module,exports){
+},{"buffer":2,"component-bind":111,"stream":25,"util":29}],106:[function(require,module,exports){
 (function (Buffer){
 var Socket = require('./socket');
 var IOStream = require('./iostream');
@@ -16840,7 +16040,7 @@ exports.createBlobReadStream = function(blob, options) {
 };
 
 }).call(this,require("buffer").Buffer)
-},{"./blob-read-stream":118,"./iostream":120,"./socket":122,"buffer":2}],120:[function(require,module,exports){
+},{"./blob-read-stream":105,"./iostream":107,"./socket":109,"buffer":2}],107:[function(require,module,exports){
 var util = require('util');
 var Duplex = require('stream').Duplex;
 var bind = require('component-bind');
@@ -17107,7 +16307,7 @@ IOStream.prototype._onerror = function(err) {
   this.destroy();
 };
 
-},{"./uuid":123,"component-bind":124,"debug":125,"stream":25,"util":29}],121:[function(require,module,exports){
+},{"./uuid":110,"component-bind":111,"debug":112,"stream":25,"util":29}],108:[function(require,module,exports){
 var util = require('util');
 var EventEmitter = require('events').EventEmitter;
 var IOStream = require('./iostream');
@@ -17214,7 +16414,7 @@ Decoder.prototype.decodeObject = function(obj) {
   return v;
 }
 
-},{"./iostream":120,"events":5,"util":29}],122:[function(require,module,exports){
+},{"./iostream":107,"events":5,"util":29}],109:[function(require,module,exports){
 (function (global,Buffer){
 var util = require('util');
 var EventEmitter = require('events').EventEmitter;
@@ -17505,7 +16705,7 @@ Socket.prototype.cleanup = function(id) {
 
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer)
-},{"./iostream":120,"./parser":121,"buffer":2,"component-bind":124,"debug":125,"events":5,"util":29}],123:[function(require,module,exports){
+},{"./iostream":107,"./parser":108,"buffer":2,"component-bind":111,"debug":112,"events":5,"util":29}],110:[function(require,module,exports){
 // UUID function from https://gist.github.com/jed/982883
 // More lightweight than node-uuid
 function b(
@@ -17532,15 +16732,15 @@ function b(
 
 module.exports = b;
 
-},{}],124:[function(require,module,exports){
-arguments[4][76][0].apply(exports,arguments)
-},{"dup":76}],125:[function(require,module,exports){
-arguments[4][111][0].apply(exports,arguments)
-},{"./debug":126,"dup":111}],126:[function(require,module,exports){
-arguments[4][112][0].apply(exports,arguments)
-},{"dup":112,"ms":127}],127:[function(require,module,exports){
-arguments[4][113][0].apply(exports,arguments)
-},{"dup":113}],128:[function(require,module,exports){
+},{}],111:[function(require,module,exports){
+arguments[4][63][0].apply(exports,arguments)
+},{"dup":63}],112:[function(require,module,exports){
+arguments[4][98][0].apply(exports,arguments)
+},{"./debug":113,"dup":98}],113:[function(require,module,exports){
+arguments[4][99][0].apply(exports,arguments)
+},{"dup":99,"ms":114}],114:[function(require,module,exports){
+arguments[4][100][0].apply(exports,arguments)
+},{"dup":100}],115:[function(require,module,exports){
 (function (process){
 /*
 Copyright (c) 2011 Tim Caswell <tim@creationix.com>
@@ -17696,7 +16896,7 @@ if (typeof module !== 'undefined' && "exports" in module) {
 }
 
 }).call(this,require('_process'))
-},{"_process":8}],129:[function(require,module,exports){
+},{"_process":8}],116:[function(require,module,exports){
 
 /**
  * Topological sorting function
@@ -17761,7 +16961,7 @@ function uniqueNodes(arr){
   return res
 }
 
-},{}],130:[function(require,module,exports){
+},{}],117:[function(require,module,exports){
 /**
  * Convert array of 16 byte values to UUID string format of the form:
  * XXXXXXXX-XXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
@@ -17786,7 +16986,7 @@ function bytesToUuid(buf, offset) {
 
 module.exports = bytesToUuid;
 
-},{}],131:[function(require,module,exports){
+},{}],118:[function(require,module,exports){
 (function (global){
 // Unique ID creation requires a high quality random # generator.  In the
 // browser this is a little complicated due to unknown quality of Math.random()
@@ -17823,7 +17023,7 @@ if (!rng) {
 module.exports = rng;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],132:[function(require,module,exports){
+},{}],119:[function(require,module,exports){
 var rng = require('./lib/rng');
 var bytesToUuid = require('./lib/bytesToUuid');
 
@@ -17854,5 +17054,805 @@ function v4(options, buf, offset) {
 
 module.exports = v4;
 
-},{"./lib/bytesToUuid":130,"./lib/rng":131}]},{},[30])(30)
+},{"./lib/bytesToUuid":117,"./lib/rng":118}],120:[function(require,module,exports){
+
+var io = require('socket.io-client');
+var ss = require('socket.io-stream');
+var assert = require('proclaim');
+var Class = require('./Class');
+var Connection = require('./Connection');
+
+Bus = module.exports = Class.extend({
+	
+	initialize : function(properties) {
+		
+		Object.assign(this, properties);
+		this.connections = [];
+	},
+	
+	connect : function(properties) {
+		
+		//godsend.assert.credentials(properties.credentials);
+		var connection = new Connection({
+			address : this.address,
+			secure : this.secure,
+			credentials : properties.credentials
+		});
+		connection.connect(function(result) {
+			if (result.errors && result.errors.length > 0) {
+				connection.disconnect(function() {
+					connection = null;
+				});
+			} else {
+				this.connections.push(connection);
+			}
+			properties.responded({
+				connection : connection,
+				errors : result.errors
+			});
+		}.bind(this));
+	}
+});
+
+},{"./Class":122,"./Connection":123,"proclaim":32,"socket.io-client":57,"socket.io-stream":104}],121:[function(require,module,exports){
+
+Cache = module.exports = Class.extend({
+	
+	initialize : function(properties) {
+		
+		Object.assign(this, properties);
+		this.patterns = {};
+	},
+	
+	cache : function(pattern, processors) {
+		
+		this.put(pattern, processors);
+	},
+	
+	put : function(pattern, processors) {
+		
+		var key = JSON.stringify(pattern, Object.keys(pattern).sort())
+		this.patterns[key] = processors;
+	},
+	
+	get : function(pattern) {
+		
+		var key = JSON.stringify(pattern, Object.keys(pattern).sort())
+		return this.patterns[key];
+	}
+});
+
+},{}],122:[function(require,module,exports){
+
+Class = module.exports = {
+	
+	extend: function(properties) {
+		
+		var superProto = this.prototype || Class;
+		var proto = Object.create(superProto);
+		Class.copy(properties, proto);
+		var initializer = proto.initialize;
+		if (! (initializer instanceof Function)) {
+			initializer = function(properties) {
+				Object.assign(this, properties);
+			};
+		}
+		initializer.prototype = proto;
+		initializer.super = superProto;
+		initializer.extend = this.extend;
+		
+		return initializer;
+	},
+	
+	copy: function(source, target) {
+		
+		Object.getOwnPropertyNames(source).forEach(function(propName) {
+			Object.defineProperty(target, propName, Object.getOwnPropertyDescriptor(source, propName));
+		});
+		
+		return target;
+	}
+};
+
+},{}],123:[function(require,module,exports){
+
+var io = require('socket.io-client');
+var ss = require('socket.io-stream');
+var Class = require('./Class');
+var Stream = require('./Stream');
+var Transport = require('./Transport');
+var Register = require('./Register');
+var Cache = require('./Cache');
+var Process = require('./Process');
+var Request = require('./Request');
+var Response = require('./Response');
+
+Connection = module.exports = Class.extend({
+	
+	initialize : function(properties) {
+		
+		Object.assign(this, properties);
+		this.register = new Register();
+		this.cache = new Cache();
+		this.initializeTransport();
+	},
+	
+	initializeTransport : function() {
+		
+		this.transport = new Transport({
+			connection : this,
+			address : this.address,
+			secure : this.secure,
+		});
+	},
+	
+	connect : function(callback) {
+		
+		this.transport.connect(callback);
+	},
+	
+	disconnect : function(callback) {
+		
+		this.transport.disconnect(callback);
+	},
+	
+	write : function(pattern) {
+		
+		return this.transport.write(pattern);
+	},
+	
+	send : function(properties) {
+		
+		var result = {
+			objects : [],
+			errors : []
+		};
+		var stream = this.transport.send(properties.pattern);
+      stream.main.on('readable', function() {
+      	var object = stream.main.read();
+      	if (object && typeof object == 'object') {
+	      	result.objects.push(object);
+	      	if (properties.read) properties.read(object);
+         }
+      });
+      stream.error.on('readable', function() {
+      	var error = stream.error.read();
+      	if (error && typeof error == 'object') {
+	      	result.errors.push(error);
+	      	if (properties.error) properties.error(value);
+         }
+      });
+      stream.main.on('end', function() {
+      	if (properties.receive) properties.receive(result);
+      });
+      stream.error.on('end', function() {
+      	if (false && properties.receive) properties.receive(result);
+      });
+		if (properties.data) {
+			var data = properties.data;
+			if (! (data instanceof Array)) {
+				data = [data];
+			}
+			data.forEach(function(each) {
+				stream.write(each);
+			}.bind(this));
+			stream.end();
+		} else {
+	      if (properties.write) properties.write(stream);
+		}
+	},
+	
+	receive : function(request, streams) {
+		
+      streams.main.on('end', function() {
+			streams.main.process.end();
+      }.bind(this));
+      streams.main.on('readable', function() {
+      	var value = streams.main.read();
+         if (value) {
+				streams.main.process.write(value);
+         }
+      }.bind(this));
+		this.getProcess(request.pattern, streams, function(process) {
+			streams.main.process = process;
+		}.bind(this));
+	},
+	
+	getProcess : function(pattern, streams, callback) {
+		
+		var request = new Request({
+			pattern : pattern,
+			candidates : this.register.getProcessors()
+		});
+		request.prepare(function() {
+			var process =  new Process({
+				processors : request.processors,
+				streams : streams,
+				request : request,
+				response : new Response()
+			});
+			callback(process);
+		});
+	},
+	
+	process : function(processor) {
+		
+		this.register.addProcessor(processor);
+	}
+});
+
+},{"./Cache":121,"./Class":122,"./Process":124,"./Register":126,"./Request":127,"./Response":128,"./Stream":130,"./Transport":131,"socket.io-client":57,"socket.io-stream":104}],124:[function(require,module,exports){
+
+var Class = require('./Class');
+var Processor = require('./Processor');
+
+Process = module.exports = Class.extend({
+	
+	initialize : function(properties) {
+		
+		Object.assign(this, properties);
+		this.assemble();
+	},
+	
+	assemble : function() {
+		
+		this.processors.forEach(function(each, index) {
+			this.processors[index] = new Processor({
+				id : each.id,
+				weight : each.weight,
+				process : each.run,
+				errors : this.streams.error,
+				request : this.request,
+				response : this.response
+			})
+		}.bind(this));
+		if (this.processors.length === 0) {
+			this.processors.push(new Processor({
+				process : function(stream) {
+					stream.next();
+				}
+			}));
+		}
+		this.processors.push(this.streams.main);
+		this.processors.forEach(function(each, index) {
+			if (index > 0) {
+				this.processors[index - 1].pipe(this.processors[index])
+			}
+		}.bind(this));
+	},
+	
+	write : function(data) {
+		
+		this.processors[0].write(data);
+	},
+	
+	end : function() {
+		
+		this.processors[0].end();
+	}
+});
+
+},{"./Class":122,"./Processor":125}],125:[function(require,module,exports){
+
+var Transform = require('stream').Transform || require('readable-stream').Transform;
+var util = require('util');
+
+function Processor(properties) {
+	
+	Transform.call(this, {
+		objectMode : true
+	});
+	Object.assign(this, properties);
+	this.expressive = this.expressive ? undefined : true;
+	this.initializeTransform();
+	this.on('error', function(error) {
+		console.error('error: ' + error);
+	}.bind(this));
+}
+
+util.inherits(Processor, Transform);
+
+Object.assign(Processor.prototype, {
+	
+	initializeTransform : function() {
+		
+		if (this.expressive) {
+			this._transform = function(chunk, encoding, next) {
+				var stream = {
+					request : this.request,
+					response : this.response,
+					object : chunk,
+					encoding : encoding,
+					next : next,
+					push : this.push.bind(this),
+					err : this.err.bind(this)
+				};
+				this.process(stream);
+			};
+		} else {
+			this._transform = function(chunk, encoding, next) {
+				this.process(chunk, encoding, next, this.stream);
+			};
+		}
+	},
+	
+	err : function(error) {
+		
+		this.errors.write(error);
+	}
+});
+
+module.exports = Processor;
+
+},{"readable-stream":56,"stream":25,"util":29}],126:[function(require,module,exports){
+(function (process){
+
+var toposort = require('toposort');
+var uuid = require('uuid/v4');
+var Class = require('./Class');
+var Utility = require('./Utility');
+
+Register = module.exports = Class.extend({
+	
+	initialize : function(properties) {
+		
+		Object.assign(this, properties);
+		this.processors = [];
+		this.cache = {};
+	},
+	
+	addProcessor : function(processor) {
+		
+		this.ensureProcessor(processor);
+		this.processors.push(processor);
+		this.sortProcessorsByVersion(this.processors);
+		this.checkConflicts();
+		this.cache = {};												// important: MUST invalidate any cached processors when adding
+	},
+	
+	ensureProcessor : function(processor) {
+		
+		processor.id = Utility.ensure(processor.id, uuid());
+		processor.weight = Utility.ensure(processor.weight, 0);
+		if (typeof processor.version != 'object') {
+			processor.version = {
+				name : processor.version,
+				'default' : false
+			}
+		}
+		processor.version.name = Utility.ensure(processor.version.name, ' unversioned ');
+	},
+	
+	getProcessors : function(versions) {
+		
+		var result = null;
+		versions = versions || {};
+		var key = Utility.stringify(versions);
+		if (this.cache[key]) {
+			result = this.cache[key];
+		} else {
+			result = this.assembleProcessors(versions);
+			this.cache[key] = result;
+		}
+		return result;
+	},
+	
+	assembleProcessors : function(versions) {
+		
+		var result = [];
+		var previous = null;
+		var version = {
+			current : null,
+			applied : null
+		};
+		this.processors.forEach(function(each) {
+			if (previous == null) {
+				result.push(each);
+				version.applied = null;
+			} else if (previous.id != each.id) {
+				result.push(each);
+				version.applied = null;
+			}
+			version.current = versions[each.id];
+			if ((version.current) && (each.version.name == version.current)) {
+				result[result.length - 1] = each;
+				version.applied = version.current;
+			}
+			if ((version.applied == null) && (each.version.default === true)) {
+				result[result.length - 1] = each;
+			}
+			previous = each;
+		}.bind(this));
+		result = this.sortProcessorsByExecution(result);
+		return result;
+	},
+	
+	sortProcessorsByVersion : function(processors) {						// should be sorted by id, then version ascending
+		
+		processors.sort(function(a, b) {
+			var aa = a['id'] + a['version'].name;
+			var bb = b['id'] + b['version'].name;
+			if (aa > bb) {
+				return 1;
+			} else if (aa < bb) {
+				return -1;
+			} else {
+				return 0;
+			}
+		});
+	},
+	
+	sortProcessorsByExecution : function(processors) {		// rethink this entire algorithm
+																			// specifically the re-insertion of befores/afters
+		processors.forEach(function(each, index) {			// if a processor references "before", set it's weight to zero
+			if (each.before || each.after) each.weight = 0;
+		}.bind(this));
+		processors.sort(function(a, b) {							// sort by weights
+			return a.weight - b.weight;
+		}.bind(this));
+		var graph = [];
+		processors.forEach(function(each, index) {
+			if (each.before) {
+				graph.push([each, this.findProcessor(processors, each.before)]);
+			} else if (each.after) {
+				graph.push([this.findProcessor(processors, each.after), each]);
+			}
+		}.bind(this));
+		var selection = toposort(graph);							// only sort "befores/afters" by themselves
+		selection.forEach(function(each) {						// else potential for cyclic hell
+			var index = processors.indexOf(each);				// issue: consider ensuring that all "before/after" ref weights are identical
+			if (index > -1) processors.splice(index, 1);
+		}.bind(this));
+		var result = [];
+		if (processors.length > 0) {
+			for (var i = 0; i < processors.length; i++) {		// and then reinsert the "befores/afters" back into the list
+				this.getMatchingWeights(selection, processors[i].weight).forEach(function(each) {
+					result.push(each);
+				}.bind(this));
+				result.push(processors[i]);
+			}
+		} else {
+			result = selection;
+		}
+		return result;
+	},
+	
+	getMatchingWeights : function(selection, weight) {
+		
+		var result = [];
+		for (var i = selection.length - 1; i >= 0; i--) {
+			if (selection[i].weight == weight) {
+				var select = selection.splice(i, 1);
+				result.unshift(select[0]);
+			}
+		}
+		return result;
+	},
+	
+	findProcessor : function(processors, id) {
+		
+		var result = null;
+		processors.forEach(function(each) {
+			if (each.id == id) {
+				result = each;
+			}
+		});
+		return result;
+	},
+	
+	checkConflicts : function() {
+		
+		var conflicts = [];
+		var previous = null;
+		this.processors.forEach(function(each) {
+			if ((previous) && (previous.id + previous.version.name == each.id + each.version.name)) {
+				conflicts.push(each.id);
+			}
+			previous = each;
+		}.bind(this));
+		if (conflicts.length > 0) {
+			console.error('Error: The processor list contains versioning conflicts: ' + JSON.stringify(conflicts, null, 2));
+			process.exit();
+		}
+	}
+});
+
+}).call(this,require('_process'))
+},{"./Class":122,"./Utility":132,"_process":8,"toposort":116,"uuid/v4":119}],127:[function(require,module,exports){
+
+var Class = require('./Class');
+
+Request = module.exports = Class.extend({
+	
+	initialize : function(properties) {
+		
+		Object.assign(this, properties);
+		this.processors = [];
+		this.index = -1;
+		this.cacheable = true;
+	},
+	
+	prepare : function(callback) {
+		
+		this.callback = callback;
+		this.next();
+	},
+	
+	next : function() {
+		
+		this.index++;
+		if (this.index < this.candidates.length) {
+			this.processor = this.candidates[this.index];
+			if (this.processor.cache === false) {
+				this.cacheable = false;
+			}
+			this.processor.on(this);
+		} else {
+			this.callback();
+		}
+	},
+	
+	accept : function() {
+		
+		if (arguments[0]) {
+			if (this.matches(arguments[0])) {
+				this.accept();
+			} else {
+				this.skip();
+			}
+		} else {
+			this.processors.push(this.processor);
+			this.next();
+		}
+	},
+	
+	skip : function() {
+		
+		this.next();
+	},
+	
+	matches : function(properties) {
+		
+		return Utility.matchesProperties(this.pattern, properties);
+	}
+});
+
+},{"./Class":122}],128:[function(require,module,exports){
+
+var Class = require('./Class');
+
+Response = module.exports = Class.extend({
+	
+	initialize : function(properties) {
+		
+		Object.assign(this, properties);
+	}
+});
+
+},{"./Class":122}],129:[function(require,module,exports){
+
+var Step = require('step');
+
+Sequence = module.exports = {
+	
+	start : function() {
+   	
+		var next = null;
+		var args = Array.prototype.slice.call(arguments);
+		args.unshift(function() {
+			next = function() {
+				setTimeout(function() {
+					this();
+				}.bind(this), 20);
+			}.bind(this);
+			next();
+		});
+		
+		Step.apply(this, args);
+		
+		return {
+			next : next
+		};
+	}
+};
+
+},{"step":115}],130:[function(require,module,exports){
+
+var Class = require('./Class');
+var io = require('socket.io-client');
+var ss = require('socket.io-stream');
+
+Stream = module.exports = Class.extend({
+	
+	initialize : function(properties) {
+		
+		Object.assign(this, properties);
+		this.main = ss.createStream({
+			highWaterMark : 1024,
+			objectMode : true,
+			allowHalfOpen : true
+		});
+		this.error = ss.createStream({
+			highWaterMark : 1024,
+			objectMode : true,
+			allowHalfOpen : true
+		});
+	},
+	
+	send : function(pattern) {
+		
+		this.socket.emit('send', {
+			pattern : pattern
+		}, {
+			main : this.main,
+			error : this.error
+		});
+	},
+	
+	write : function(data, callback) {
+		
+      this.main.write(data, callback);
+	},
+	
+	end : function() {
+		
+		this.main.end();
+	}
+});
+
+},{"./Class":122,"socket.io-client":57,"socket.io-stream":104}],131:[function(require,module,exports){
+
+var io = require('socket.io-client');
+var ss = require('socket.io-stream');
+var Logger = require('js-logger');
+
+Transport = module.exports = Class.extend({
+	
+	initialize : function(properties) {
+		
+		Object.assign(this, properties);
+	},
+	
+	connect : function(callback) {
+		
+		this.socket = io.connect(this.address, {
+		  secure : this.secure || false,
+		  reconnection : true,
+		  reconnectionDelay : 100,
+		  reconnectionAttempts : 10
+		});
+		this.socket.on('connect', function() {
+			if (this.connection.credentials) {
+				this.socket.emit('authenticate', this.connection.credentials, function(result) {
+					if (result && result.value && result.value.authentic) {
+						var username = this.connection.credentials.username;
+						Logger.get('transport').log('Connected to the broker as "' + username + '".');
+					}
+					callback(result);
+		      }.bind(this));
+			} else {
+				Logger.get('transport').log('Connected to the broker.');
+				callback({
+					errors : []
+				});
+			}
+		}.bind(this));
+		this.socket.on('connect_error', function(error) {
+			Logger.get('transport').error('connect_error: ' + error);
+			callback(error);
+		});
+		this.socket = ss(this.socket);
+      this.socket.on('receive', function(request, stream) {
+			this.receive(request, stream);
+      }.bind(this));
+	},
+	
+	disconnect : function(callback) {
+		
+		console.log('Transport.disconnect');
+		callback();
+	},
+	
+	send : function(pattern) {
+		
+		var stream = new Stream({
+			socket : this.socket,
+			pattern : pattern
+		});
+		stream.send(pattern);
+      return stream;
+	},
+	
+	receive : function(request, stream) {
+      
+		this.connection.receive(request, stream);
+	}
+});
+
+},{"js-logger":31,"socket.io-client":57,"socket.io-stream":104}],132:[function(require,module,exports){
+
+Utility = module.exports = {
+	
+	digest : function(string) {
+		
+		return string;
+	},
+	
+	digesting : function(string) {
+		
+		var md = forge.md.sha1.create();
+		md.update(string);
+		return md.digest().toHex();
+	},
+	
+	matchesPartially : function(pattern, patterns) {						// really need to study this in depth (all the limits)
+		
+		var result = false;
+		patterns.forEach(function(each) {
+			var match = true;
+			for (var property in each) {
+				if (each[property] != pattern[property]) {
+					match = false;
+				}
+			}
+			if (match === true) {
+				result = true;
+			}
+		}.bind(this));
+		return result;
+	},
+	
+	matchesStrictly : function(pattern, patterns) {
+		
+		var result = false;
+		var string = Utility.stringify(pattern);
+		patterns.forEach(function(each) {
+			if (Utility.stringify(each) == string) {
+				result = true;
+			}
+		}.bind(this));
+		return result;
+	},
+	
+	matchesProperties : function(pattern, properties) {
+		
+		var result = true;
+		var property = null;
+		for (property in properties) {
+			if (pattern[property] != properties[property]) {
+				result = false;
+			}
+		}
+		return result;
+	},
+	
+	stringify : function(object) {
+		
+		return JSON.stringify(object, Object.keys(object).sort())
+	},
+	
+	ensure : function(value, substitute) {
+		
+		if (value === undefined) {
+			return substitute;
+		} else if (value === null) {
+			return substitute;
+		} else {
+			return value;
+		}
+	},
+	
+	isHandled : function(result) {
+		
+		var handled = false;
+		if (result.value) {
+			if (JSON.stringify(result.value) != '{}') {
+				handled = true;
+			}
+		}
+		return handled;
+	}
+};
+
+},{}]},{},[30])(30)
 });
