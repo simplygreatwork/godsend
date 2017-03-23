@@ -72,6 +72,7 @@ Authorizer = module.exports = Class.extend({
 							stream.error({
 								message : 'The user already exists and may not be added.'
 							});
+							stream.next();
 						} else {
 							this.storage.put({
 								collection : 'users',
