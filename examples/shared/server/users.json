@@ -31,6 +31,20 @@
 			}]
 		}
 	},
+	"logger" : {
+		"credentials" : {
+			"username" : "logger",
+			"passphrase" : "passphrase-to-hash"
+		},
+		"patterns" : {
+			"sendable" : [{
+				"topic" : "examples-logging"
+			}],
+			"receivable" : [{
+				"topic" : "examples-logging"
+			}]
+		}
+	},
 	"admin" : {
 		"credentials" : {
 			"username" : "admin",

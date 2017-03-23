@@ -1,4 +1,6 @@
 
+var Class = require('../../../godsend.js').Class;
+var Bus = require('../../../godsend.js').Bus;
 var Credentials = require('./Credentials.js');
 var Storage = require('./Storage.js');
 
@@ -14,7 +16,7 @@ Authorizer = module.exports = Class.extend({
 	
 	connect : function(callback) {
 		
-		this.bus = this.bus || new godsend.Bus({
+		this.bus = new Bus({
 			address : 'http://127.0.0.1:8080/',
 			secure : false
 		});
@@ -25,17 +27,17 @@ Authorizer = module.exports = Class.extend({
 			},
 			responded : function(result) {
 				this.connection = result.connection;
-				this.receive();
+				this.process();
 				callback();
 			}.bind(this)
 		});
 	},
 	
-	receive : function() {
+	process : function() {
 		
-		this.connection.receive({
+		this.connection.process({
 			id : 'authentication-get-user',
-			on : function(request, response) {
+			on : function(request) {
 				if (request.matches({
 					topic : 'authentication',
 					action : 'get-user'
@@ -45,21 +47,21 @@ Authorizer = module.exports = Class.extend({
 					request.skip();
 				}
 			}.bind(this),
-			run : function(request, response) {
+			run : function(stream) {
 				this.storage.get({
 					collection : 'users',
-					key : request.data.username,
+					key : stream.object.username,
 					callback : function(properties) {
-						response.data = properties.value;
-						request.next();
+						stream.push(properties.value);
+						stream.next();
 					}
 				});
 			}.bind(this)
 		});
 		
-		this.connection.receive({
+		this.connection.process({
 			id : 'authentication-put-user',
-			on : function(request, response) {
+			on : function(request) {
 				if (request.matches({
 					topic : 'authentication',
 					action : 'put-user'
@@ -69,30 +71,31 @@ Authorizer = module.exports = Class.extend({
 					request.skip();
 				}
 			}.bind(this),
-			run : function(request, response) {
+			run : function(stream) {
 				this.storage.get({
 					collection : 'users',
-					key : request.data.username,
+					key : stream.object.username,
 					callback : function(properties) {
 						if (properties.value) {
-							response.error = 'The user already exists and may not be added.';
-							request.end();
+							stream.error({
+								message : 'The user already exists and may not be added.'
+							});
 						} else {
 							this.storage.put({
 								collection : 'users',
-								key : request.data.credentials.username,
-								value : request.data,
+								key : stream.object.credentials.username,
+								value : stream.object,
 								callback : function(properties) {
 									if (properties.error) {
-										response.data = {
+										stream.push({
 											success : false
-										};
+										});
 									} else {
-										response.data = {
+										stream.push({
 											success : true
-										};
+										});
 									}
-									request.next();
+									stream.next();
 								}.bind(this)
 							});
 						}
