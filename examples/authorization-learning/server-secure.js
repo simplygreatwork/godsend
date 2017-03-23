@@ -1,4 +1,3 @@
-
 var Class = require('../../godsend.js').Class;
 var Bus = require('../../godsend.js').Bus;
 var exchange = require('../../godsend.js').Exchange;
@@ -8,16 +7,16 @@ var Credentials = require('../shared/server/Credentials');
 var Client = require('./client.js');
 
 Example = Class.extend({
-	
-	initialize : function(properties) {
-		
+
+	initialize: function(properties) {
+
 		new Server({
-			exchange : new exchange.Secure({
-      		users : require('../shared/server/users.json')
-	      })
+			exchange: new exchange.Secure({
+				users: require('../shared/server/users.json')
+			})
 		}).start(function() {
 			new Authorizer({
-				users : this.users
+				users: this.users
 			}).connect(function() {
 				new Agent().connect(function() {
 					new Client({});
@@ -26,68 +25,68 @@ Example = Class.extend({
 			});
 		}.bind(this));
 	},
-   
-   users : {
-		'agent' : {
-			credentials : {
-				username : Credentials.get('agent').username,
-				passphrase : Credentials.get('agent').passphrase,
+
+	users: {
+		'agent': {
+			credentials: {
+				username: Credentials.get('agent').username,
+				passphrase: Credentials.get('agent').passphrase,
 			},
-			patterns : {
-				sendable : [],
-				receivable : []
+			patterns: {
+				sendable: [],
+				receivable: []
 			}
 		},
-		'client' : {
-			credentials : {
-				username : Credentials.get('client').username,
-				passphrase : Credentials.get('client').passphrase,
+		'client': {
+			credentials: {
+				username: Credentials.get('client').username,
+				passphrase: Credentials.get('client').passphrase,
 			},
-			patterns : {
-				sendable : [],
-				receivable : []
+			patterns: {
+				sendable: [],
+				receivable: []
 			}
 		}
-   }
+	}
 });
 
 Agent = Class.extend({
-	
-	initialize : function(properties) {
-		
+
+	initialize: function(properties) {
+
 		Object.assign(this, properties);
 	},
-	
-	connect : function(callback) {
-		
+
+	connect: function(callback) {
+
 		this.bus = new Bus({
-			address : 'http://127.0.0.1:8080/'
+			address: 'http://127.0.0.1:8080/'
 		});
 		this.bus.connect({
-			credentials : {
-				username : Credentials.get('agent').username,
-				passphrase : Credentials.get('agent').passphrase,
+			credentials: {
+				username: Credentials.get('agent').username,
+				passphrase: Credentials.get('agent').passphrase,
 			},
-			responded : function(result) {
+			responded: function(result) {
 				this.connection = result.connection;
 				this.process();
 				callback();
 			}.bind(this)
 		});
 	},
-	
-	process : function() {
-		
+
+	process: function() {
+
 		this.connection.process({
-			id : 'post-message',
-			on : function(request, response) {
+			id: 'post-message',
+			on: function(request, response) {
 				request.accept({
-					topic : 'post-message'
+					topic: 'post-message'
 				})
 			}.bind(this),
-			run : function(stream) {
+			run: function(stream) {
 				stream.push({
-					message : 'Securely received a message from the client: ' + JSON.stringify(stream.object)
+					message: 'Securely received a message from the client: ' + JSON.stringify(stream.object)
 				});
 				stream.next();
 			}.bind(this)

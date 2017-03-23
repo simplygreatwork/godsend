@@ -1,30 +1,29 @@
-
 var Class = require('./Class');
 var Processor = require('./Processor');
 
 Process = module.exports = Class.extend({
-	
-	initialize : function(properties) {
-		
+
+	initialize: function(properties) {
+
 		Object.assign(this, properties);
 		this.assemble();
 	},
-	
-	assemble : function() {
-		
+
+	assemble: function() {
+
 		this.processors.forEach(function(each, index) {
 			this.processors[index] = new Processor({
-				id : each.id,
-				weight : each.weight,
-				process : each.run,
-				errors : this.streams.error,
-				request : this.request,
-				response : this.response
+				id: each.id,
+				weight: each.weight,
+				process: each.run,
+				errors: this.streams.error,
+				request: this.request,
+				response: this.response
 			})
 		}.bind(this));
 		if (this.processors.length === 0) {
 			this.processors.push(new Processor({
-				process : function(stream) {
+				process: function(stream) {
 					stream.next();
 				}
 			}));
@@ -36,14 +35,14 @@ Process = module.exports = Class.extend({
 			}
 		}.bind(this));
 	},
-	
-	write : function(data) {
-		
+
+	write: function(data) {
+
 		this.processors[0].write(data);
 	},
-	
-	end : function() {
-		
+
+	end: function() {
+
 		this.processors[0].end();
 	}
 });

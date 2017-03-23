@@ -1,31 +1,30 @@
-
 var ss = require('socket.io-stream');
 var Logger = require('js-logger');
 var Bus = require('./Bus');
 var User = require('./User');
 
 var Open = Class.extend({
-	
-	initialize : function(properties) {
-		
+
+	initialize: function(properties) {
+
 		Object.assign(this, properties);
 	},
-	
-	connect : function(callback) {
-		
+
+	connect: function(callback) {
+
 		callback();
 	},
-	
-	exchange : function(request, stream, connection) {
-		
+
+	exchange: function(request, stream, connection) {
+
 		this.manage(stream);
 		this.broker.connections.forEach(function(connection) {
 			this.broadcast(request, stream, connection);
 		}.bind(this));
 	},
-	
-	manage : function(stream) {
-		
+
+	manage: function(stream) {
+
 		stream.restreams = [];
 		stream.finished = 0;
 		stream.main.on('readable', function() {
@@ -46,9 +45,9 @@ var Open = Class.extend({
 			console.error('stream error: ' + error);
 		});
 	},
-	
-	broadcast : function(request, stream, connection) {
-		
+
+	broadcast: function(request, stream, connection) {
+
 		var restream = {
 			main: ss.createStream({
 				highWaterMark: 1024,
@@ -66,7 +65,7 @@ var Open = Class.extend({
 			var data = restream.main.read();
 			if (data) {
 				stream.main.write(data);
-				if ((this.received) && (restream.received === false)) {				// a hook for the Learning exchange
+				if ((this.received) && (restream.received === false)) { // a hook for the Learning exchange
 					this.received(request, stream, connection);
 					restream.received = true;
 				};
@@ -100,16 +99,16 @@ var Open = Class.extend({
 });
 
 var Secure = Open.extend({
-	
+
 	initialize: function(properties) {
-		
+
 		Object.assign(this, properties);
 		this.initializeUsers();
 		this.initializeBus();
 	},
-	
-	initializeUsers : function() {
-		
+
+	initializeUsers: function() {
+
 		this.users = this.users || require('./users.json');
 		if (this.users) {
 			Object.keys(this.users).forEach(function(key) {
@@ -119,22 +118,22 @@ var Secure = Open.extend({
 			throw new Error('The secure exchange must be provided basic users.');
 		}
 	},
-	
-	initializeBus : function() {
-		
+
+	initializeBus: function() {
+
 		this.bus = new Bus({
 			address: 'http://127.0.0.1:8080/',
 		});
 	},
-	
-	connect : function(callback) {											// authentication data will come from over the bus
-		
+
+	connect: function(callback) { // authentication data will come from over the bus
+
 		this.bus.connect({
 			credentials: {
 				username: 'broker',
 				passphrase: 'passphrase-to-hash'
 			},
-			responded: function(result) {									// next: now update broker and master user records (the patterns at least)
+			responded: function(result) { // next: now update broker and master user records (the patterns at least)
 				this.connected = true;
 				Logger.get('exchange').info('The secure broker exchange is now connected to the bus as a client.');
 				this.connection = result.connection;
@@ -144,7 +143,7 @@ var Secure = Open.extend({
 		});
 	},
 
-	process : function() {													// the signin receiver should probably be external : remove this
+	process: function() { // the signin receiver should probably be external : remove this
 
 		this.connection.process({
 			id: 'authentication-sign-in',
@@ -175,19 +174,19 @@ var Secure = Open.extend({
 			}.bind(this)
 		});
 	},
-	
-	err : function(stream, message) {
-		
+
+	err: function(stream, message) {
+
 		Logger.get('exchange').error(message);
 		console.error(message);
 		stream.error.write(message);
 		stream.main.end();
 		stream.error.end();
 	},
-	
-	load: function(credentials, callback) {								// should user authentication be on a separate server-side only bus? less risk?
-		
-		if (this.connected) {													// actually check the connection to see if connected
+
+	load: function(credentials, callback) { // should user authentication be on a separate server-side only bus? less risk?
+
+		if (this.connected) { // actually check the connection to see if connected
 			this.connection.send({
 				pattern: {
 					topic: 'authentication',
@@ -209,9 +208,9 @@ var Secure = Open.extend({
 			callback();
 		}
 	},
-	
+
 	authenticate: function(credentials) {
-		
+
 		var result = false;
 		var user = this.users[credentials.username];
 		if (user) {
@@ -225,9 +224,9 @@ var Secure = Open.extend({
 		}
 		return result;
 	},
-	
-	exchange : function(request, stream, connection) {
-		
+
+	exchange: function(request, stream, connection) {
+
 		this.manage(stream);
 		var username = connection.credentials.username;
 		var user = this.users[username];
@@ -244,7 +243,7 @@ var Secure = Open.extend({
 					}
 				}
 			}.bind(this));
-			if (! sent) {
+			if (!sent) {
 				stream.main.end();
 				stream.error.end();
 			}
@@ -255,16 +254,16 @@ var Secure = Open.extend({
 });
 
 var Learning = Secure.extend({
-	
+
 	initialize: function(properties) {
 
 		Object.assign(this, properties);
 		this.initializeUsers();
 		this.initializeBus();
 	},
-	
-	exchange : function(request, stream, connection) {
-		
+
+	exchange: function(request, stream, connection) {
+
 		this.manage(stream);
 		var username = connection.credentials.username;
 		var user = this.users[username];
@@ -279,7 +278,7 @@ var Learning = Secure.extend({
 					this.broadcast(request, stream, each);
 				}
 			}.bind(this));
-			if (! sent) {
+			if (!sent) {
 				stream.main.end();
 				stream.error.end();
 			}
@@ -287,17 +286,17 @@ var Learning = Secure.extend({
 			this.err(response, 'The sender "' + username + '" is not allowed to send the pattern: ' + JSON.stringify(request.pattern));
 		}
 	},
-	
-	received : function(request, stream, connection) {
-		
+
+	received: function(request, stream, connection) {
+
 		var username = connection.credentials.username;
 		var user = this.users[username];
 		this.learn('receivable', request, user);
 	},
-	
+
 	learn: function(type, request, user, callback) {
-		
-		if (! Utility.matchesProperties(request.pattern, {
+
+		if (!Utility.matchesProperties(request.pattern, {
 				topic: 'authentication',
 				action: 'put-user'
 			})) {
@@ -311,9 +310,9 @@ var Learning = Secure.extend({
 			}
 		}
 	},
-	
+
 	save: function(user, callback) {
-		
+
 		this.connection.send({
 			pattern: {
 				topic: 'authentication',
@@ -330,7 +329,7 @@ var Learning = Secure.extend({
 
 
 exchange = module.exports = {
-	
+
 	Open: Open,
 	Secure: Secure,
 	Learning: Learning,

@@ -1,4 +1,3 @@
-
 var Class = require('../../godsend.js').Class;
 var Bus = require('../../godsend.js').Bus;
 var Server = require('../shared/server/Server');
@@ -7,12 +6,12 @@ var Credentials = require('../shared/server/Credentials');
 var Client = require('./client.js');
 
 Example = Class.extend({
-	
-	initialize : function(properties) {
-		
+
+	initialize: function(properties) {
+
 		new Server().start(function() {
 			new Authorizer({
-				users : this.users
+				users: this.users
 			}).connect(function() {
 				new Agent().connect(function() {
 					new Client({});
@@ -21,84 +20,84 @@ Example = Class.extend({
 			});
 		}.bind(this));
 	},
-	
-   users : {
-		'agent' : {
-			credentials : {
-				username : Credentials.get('agent').username,
-				passphrase : Credentials.get('agent').passphrase,
+
+	users: {
+		'agent': {
+			credentials: {
+				username: Credentials.get('agent').username,
+				passphrase: Credentials.get('agent').passphrase,
 			},
-			patterns : {
-				sendable : [],
-				receivable : [{
-					topic : 'store',
-					action : 'put',
-					collection : 'tasks'
+			patterns: {
+				sendable: [],
+				receivable: [{
+					topic: 'store',
+					action: 'put',
+					collection: 'tasks'
 				}, {
-					topic : 'store',
-					action : 'all',
-					collection : 'tasks'
+					topic: 'store',
+					action: 'all',
+					collection: 'tasks'
 				}]
 			}
 		},
-		'client' : {
-			credentials : {
-				username : Credentials.get('client').username,
-				passphrase : Credentials.get('client').passphrase,
+		'client': {
+			credentials: {
+				username: Credentials.get('client').username,
+				passphrase: Credentials.get('client').passphrase,
 			},
-			patterns : {
-				sendable : [{
-					topic : 'store',
-					action : 'put',
-					collection : 'tasks'
+			patterns: {
+				sendable: [{
+					topic: 'store',
+					action: 'put',
+					collection: 'tasks'
 				}, {
-					topic : 'store',
-					action : 'all',
-					collection : 'tasks'
+					topic: 'store',
+					action: 'all',
+					collection: 'tasks'
 				}],
-				receivable : []
+				receivable: []
 			}
 		}
-   }
+	}
 });
 
 Agent = Class.extend({
-	
-	initialize : function(properties) {
-		
+
+	initialize: function(properties) {
+
 		Object.assign(this, properties);
 		this.storage = {};
 	},
-	
-	connect : function(callback) {
-		
+
+	connect: function(callback) {
+
 		new Bus({
-			address : 'http://127.0.0.1:8080/'
+			address: 'http://127.0.0.1:8080/'
 		}).connect({
-			credentials : {
-				username : Credentials.get('agent').username,
-				passphrase : Credentials.get('agent').passphrase,
+			credentials: {
+				username: Credentials.get('agent').username,
+				passphrase: Credentials.get('agent').passphrase,
 			},
-			responded : function(result) {
+			responded: function(result) {
 				this.connection = result.connection;
 				this.process();
 				callback();
 			}.bind(this)
 		});
 	},
-	
-	process : function() {
-		
+
+	process: function() {
+
 		this.connection.process({
-			id : 'store-all-tasks',
-			on : function(request) {
+			id: 'store-all-tasks',
+			on: function(request) {
 				request.accept({
-					topic : 'store',
-					action : 'all',
-					collection : 'tasks'
+					topic: 'store',
+					action: 'all',
+					collection: 'tasks'
 				});
 			}.bind(this),
-			run : function(stream) {
+			run: function(stream) {
 				var collection = stream.request.pattern.collection;
 				this.storage[collection] = this.storage[collection] || {};
 				if (stream.object.fields) {
@@ -119,17 +118,17 @@ Agent = Class.extend({
 				stream.next();
 			}.bind(this)
 		});
-		
+
 		this.connection.process({
-			id : 'store-put',
-			cache : false,
-			on : function(request) {
+			id: 'store-put',
+			cache: false,
+			on: function(request) {
 				request.accept({
-					topic : 'store',
-					action : 'put'
+					topic: 'store',
+					action: 'put'
 				});
 			}.bind(this),
-			run : function(stream) {
+			run: function(stream) {
 				console.log('Putting the task.');
 				var collection = stream.request.pattern.collection;
 				var key = stream.object.key;
@@ -139,22 +138,22 @@ Agent = Class.extend({
 				stream.next();
 			}.bind(this)
 		});
-		
+
 		this.connection.process({
-			id : 'store-put-tasks-validate',
-			before : 'store-put',
-			on : function(request) {
+			id: 'store-put-tasks-validate',
+			before: 'store-put',
+			on: function(request) {
 				request.accept({
-					topic : 'store',
-					action : 'put',
-					collection : 'tasks'
+					topic: 'store',
+					action: 'put',
+					collection: 'tasks'
 				});
 			}.bind(this),
-			run : function(stream) {
+			run: function(stream) {
 				console.log('Validating the task.');
-				if (! stream.object.value.title) {
+				if (!stream.object.value.title) {
 					stream.err({
-						message : 'The task is not valid.'
+						message: 'The task is not valid.'
 					});
 					stream.next();
 				} else {
@@ -163,21 +162,21 @@ Agent = Class.extend({
 				}
 			}.bind(this)
 		});
-		
+
 		this.connection.process({
-			id : 'store-put-tasks-transform',
-			before : 'store-put-tasks-validate',
-			on : function(request) {
+			id: 'store-put-tasks-transform',
+			before: 'store-put-tasks-validate',
+			on: function(request) {
 				request.accept({
-					topic : 'store',
-					action : 'put',
-					collection : 'tasks'
+					topic: 'store',
+					action: 'put',
+					collection: 'tasks'
 				});
 			}.bind(this),
-			run : function(stream) {
+			run: function(stream) {
 				console.log('Transforming the task.');
-				if (! stream.object.value.id) stream.object.value.id = stream.object.key;
-				if (! stream.object.value.created) stream.object.value.created = new Date();
+				if (!stream.object.value.id) stream.object.value.id = stream.object.key;
+				if (!stream.object.value.created) stream.object.value.created = new Date();
 				stream.object.value.modified = new Date();
 				stream.push(stream.object);
 				stream.next();

@@ -1,14 +1,13 @@
-
 var fs = require('fs');
 
 Storage = module.exports = Class.extend({
-	
-	initialize : function(properties) {
-		
+
+	initialize: function(properties) {
+
 		Object.assign(this, properties);
 		if (this.users) {
 			this.data = {
-				users : this.users
+				users: this.users
 			};
 			delete this.users;
 		}
@@ -19,34 +18,34 @@ Storage = module.exports = Class.extend({
 			}.bind(this));
 		}.bind(this));
 	},
-	
-	put : function(properties) {
-		
+
+	put: function(properties) {
+
 		this.data.users[properties.key] = properties.value;
 		properties.callback({
-			error : null
+			error: null
 		});
 		this.save();
 	},
-	
-	get : function(properties) {
-		
+
+	get: function(properties) {
+
 		var value = this.data.users[properties.key];
 		properties.callback({
-			error : null,
-			value : value
+			error: null,
+			value: value
 		});
 	},
-	
-	save : function() {
-		
+
+	save: function() {
+
 		fs.writeFileSync('data.json', JSON.stringify(this.data, null, 2));
 	},
-	
-	load : function(callback) {
-		
+
+	load: function(callback) {
+
 		var result = {
-			users : {}
+			users: {}
 		};
 		var path = 'data.json';
 		if (fs.existsSync(path)) {

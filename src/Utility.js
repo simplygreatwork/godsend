@@ -1,20 +1,19 @@
-
 Utility = module.exports = {
-	
-	digest : function(string) {
-		
+
+	digest: function(string) {
+
 		return string;
 	},
-	
-	digesting : function(string) {
-		
+
+	digesting: function(string) {
+
 		var md = forge.md.sha1.create();
 		md.update(string);
 		return md.digest().toHex();
 	},
-	
-	matchesPartially : function(pattern, patterns) {						// really need to study this in depth (all the limits)
-		
+
+	matchesPartially: function(pattern, patterns) { // really need to study this in depth (all the limits)
+
 		var result = false;
 		patterns.forEach(function(each) {
 			var match = true;
@@ -29,9 +28,9 @@ Utility = module.exports = {
 		}.bind(this));
 		return result;
 	},
-	
-	matchesStrictly : function(pattern, patterns) {
-		
+
+	matchesStrictly: function(pattern, patterns) {
+
 		var result = false;
 		var string = Utility.stringify(pattern);
 		patterns.forEach(function(each) {
@@ -41,9 +40,9 @@ Utility = module.exports = {
 		}.bind(this));
 		return result;
 	},
-	
-	matchesProperties : function(pattern, properties) {
-		
+
+	matchesProperties: function(pattern, properties) {
+
 		var result = true;
 		var property = null;
 		for (property in properties) {
@@ -53,14 +52,14 @@ Utility = module.exports = {
 		}
 		return result;
 	},
-	
-	stringify : function(object) {
-		
+
+	stringify: function(object) {
+
 		return JSON.stringify(object, Object.keys(object).sort())
 	},
-	
-	ensure : function(value, substitute) {
-		
+
+	ensure: function(value, substitute) {
+
 		if (value === undefined) {
 			return substitute;
 		} else if (value === null) {
@@ -69,9 +68,9 @@ Utility = module.exports = {
 			return value;
 		}
 	},
-	
-	isHandled : function(result) {
-		
+
+	isHandled: function(result) {
+
 		var handled = false;
 		if (result.value) {
 			if (JSON.stringify(result.value) != '{}') {

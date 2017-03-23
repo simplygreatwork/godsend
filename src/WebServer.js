@@ -1,10 +1,9 @@
-
 var Logger = require('js-logger');
 
 WebServer = module.exports = Class.extend({
-	
-	start : function(callback) {
-   	
+
+	start: function(callback) {
+
 		var Express = require('express');
 		var express = Express();
 		if (this.options && this.options.cert && this.options.key) {

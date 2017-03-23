@@ -1,11 +1,10 @@
-
 Credentials = module.exports = {
-	
-	get : function(username) {
-		
+
+	get: function(username) {
+
 		return {
-			username : username,
-			passphrase : 'passphrase-to-hash'
+			username: username,
+			passphrase: 'passphrase-to-hash'
 		};
 	}
 };

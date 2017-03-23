@@ -1,4 +1,3 @@
-
 var Class = require('../../godsend.js').Class;
 var Bus = require('../../godsend.js').Bus;
 var Sequence = require('../../godsend.js').Sequence;
@@ -8,12 +7,12 @@ var Credentials = require('../shared/server/Credentials');
 var Client = require('./client.js');
 
 Example = Class.extend({
-	
-	initialize : function(properties) {
-		
+
+	initialize: function(properties) {
+
 		new Server().start(function() {
 			new Authorizer({
-				users : this.users
+				users: this.users
 			}).connect(function() {
 				new Agent().connect(function() {
 					console.log('Everything has been started.');
@@ -22,70 +21,70 @@ Example = Class.extend({
 			});
 		}.bind(this));
 	},
-	
-   users : {
-		'agent' : {
-			credentials : {
-				username : Credentials.get('agent').username,
-				passphrase : Credentials.get('agent').passphrase,
+
+	users: {
+		'agent': {
+			credentials: {
+				username: Credentials.get('agent').username,
+				passphrase: Credentials.get('agent').passphrase,
 			},
-			patterns : {
-				sendable : [],
-				receivable : [{
-					topic : 'transform-object'
+			patterns: {
+				sendable: [],
+				receivable: [{
+					topic: 'transform-object'
 				}]
 			}
 		},
-		'client' : {
-			credentials : {
-				username : Credentials.get('client').username,
-				passphrase : Credentials.get('client').passphrase,
+		'client': {
+			credentials: {
+				username: Credentials.get('client').username,
+				passphrase: Credentials.get('client').passphrase,
 			},
-			patterns : {
-				sendable : [{
-					topic : 'transform-object'
+			patterns: {
+				sendable: [{
+					topic: 'transform-object'
 				}],
-				receivable : []
+				receivable: []
 			}
 		}
-   }
+	}
 });
 
 Agent = Class.extend({
-	
-	initialize : function(properties) {
-		
+
+	initialize: function(properties) {
+
 		Object.assign(this, properties);
 		this.storage = {};
 	},
-	
-	connect : function(callback) {
-		
+
+	connect: function(callback) {
+
 		new Bus({
-			address : 'http://127.0.0.1:8080/'
+			address: 'http://127.0.0.1:8080/'
 		}).connect({
-			credentials : {
-				username : Credentials.get('agent').username,
-				passphrase : Credentials.get('agent').passphrase,
+			credentials: {
+				username: Credentials.get('agent').username,
+				passphrase: Credentials.get('agent').passphrase,
 			},
-			responded : function(result) {
+			responded: function(result) {
 				this.connection = result.connection;
 				this.process();
 				callback();
 			}.bind(this)
 		});
 	},
-	
-	process : function() {
-		
+
+	process: function() {
+
 		this.connection.process({
-			id : 'transform-object',
-			on : function(request) {
+			id: 'transform-object',
+			on: function(request) {
 				request.accept({
-					topic : 'transform-object'
+					topic: 'transform-object'
 				});
 			}.bind(this),
-			run : function(stream) {
+			run: function(stream) {
 				var object = stream.object;
 				object.date = new Date();
 				stream.push(object);

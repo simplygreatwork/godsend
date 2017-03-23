@@ -1,11 +1,10 @@
-
 var Transform = require('stream').Transform || require('readable-stream').Transform;
 var util = require('util');
 
 function Processor(properties) {
-	
+
 	Transform.call(this, {
-		objectMode : true
+		objectMode: true
 	});
 	Object.assign(this, properties);
 	this.expressive = this.expressive ? undefined : true;
@@ -18,19 +17,19 @@ function Processor(properties) {
 util.inherits(Processor, Transform);
 
 Object.assign(Processor.prototype, {
-	
-	initializeTransform : function() {
-		
+
+	initializeTransform: function() {
+
 		if (this.expressive) {
 			this._transform = function(chunk, encoding, next) {
 				var stream = {
-					request : this.request,
-					response : this.response,
-					object : chunk,
-					encoding : encoding,
-					next : next,
-					push : this.push.bind(this),
-					err : this.err.bind(this)
+					request: this.request,
+					response: this.response,
+					object: chunk,
+					encoding: encoding,
+					next: next,
+					push: this.push.bind(this),
+					err: this.err.bind(this)
 				};
 				this.process(stream);
 			};
@@ -40,9 +39,9 @@ Object.assign(Processor.prototype, {
 			};
 		}
 	},
-	
-	err : function(error) {
-		
+
+	err: function(error) {
+
 		this.errors.write(error);
 	}
 });

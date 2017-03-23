@@ -1,4 +1,3 @@
-
 var uuid = require('uuid');
 var Logger = require('js-logger');
 var Class = require('../../godsend.js').Class;
@@ -6,19 +5,19 @@ var Bus = require('../../godsend.js').Bus;
 var Sequence = require('../../godsend.js').Sequence;
 
 Client = module.exports = Class.extend({
-	
-	initialize : function(properties) {
-		
+
+	initialize: function(properties) {
+
 		new Receiver.Task({
-			bus : this.bus = new Bus({
-				address : 'http://127.0.0.1:8080'
+			bus: this.bus = new Bus({
+				address: 'http://127.0.0.1:8080'
 			})
 		}).connect(function() {
 			new Receiver.Patient({
-				bus : this.bus
+				bus: this.bus
 			}).connect(function() {
 				new Sender({
-					bus : this.bus
+					bus: this.bus
 				}).connect(function(sender) {
 					sender.start();
 				}.bind(this));
@@ -28,67 +27,67 @@ Client = module.exports = Class.extend({
 });
 
 Sender = Class.extend({
-	
-	connect : function(callback) {
-		
+
+	connect: function(callback) {
+
 		this.bus.connect({
-			credentials : {
-				username : Credentials.get('sender').username,
-				passphrase : Credentials.get('sender').passphrase,
+			credentials: {
+				username: Credentials.get('sender').username,
+				passphrase: Credentials.get('sender').passphrase,
 			},
-			responded : function(result) {
+			responded: function(result) {
 				this.connection = result.connection;
 				callback(this);
 			}.bind(this)
 		});
 	},
-	
-	start : function() {
-		
+
+	start: function() {
+
 		var sequence = Sequence.start(
-			
+
 			function() {
-				
+
 				this.connection.send({
-					pattern : {
-						topic : 'store',
-						action : 'put',
-						collection : 'tasks'
+					pattern: {
+						topic: 'store',
+						action: 'put',
+						collection: 'tasks'
 					},
-					data : {
-						key : uuid(),
-						value : {
-							title : 'New Task'
+					data: {
+						key: uuid(),
+						value: {
+							title: 'New Task'
 						}
 					},
-					receive : function(result) {
+					receive: function(result) {
 						console.log('Result: ' + JSON.stringify(result.objects, null, 2));
 						sequence.next();
 					}.bind(this)
 				});
-				
+
 			}.bind(this),
-			
+
 			function() {
-				
+
 				this.connection.send({
-					pattern : {
-						topic : 'store',
-						action : 'put',
-						collection : 'patients'
+					pattern: {
+						topic: 'store',
+						action: 'put',
+						collection: 'patients'
 					},
-					data : {
-						key : uuid(),
-						value : {
-							title : 'New Patient'
+					data: {
+						key: uuid(),
+						value: {
+							title: 'New Patient'
 						}
 					},
-					receive : function(result) {
+					receive: function(result) {
 						console.log('Result: ' + JSON.stringify(result.objects, null, 2));
 						sequence.next();
 					}.bind(this)
 				});
-				
+
 			}.bind(this)
 
 		);
@@ -96,102 +95,102 @@ Sender = Class.extend({
 });
 
 Receiver = {
-	
-	Task : Class.extend({
-		
-		connect : function(callback) {
-			
+
+	Task: Class.extend({
+
+		connect: function(callback) {
+
 			this.bus.connect({
-				credentials : {
-					username : Credentials.get('task-receiver').username,
-					passphrase : Credentials.get('task-receiver').passphrase,
+				credentials: {
+					username: Credentials.get('task-receiver').username,
+					passphrase: Credentials.get('task-receiver').passphrase,
 				},
-				responded : function(result) {
+				responded: function(result) {
 					this.connection = result.connection;
 					this.process();
 					callback();
 				}.bind(this)
 			});
 		},
-		
-		process : function() {
-			
+
+		process: function() {
+
 			this.connection.process({
-				id : 'store-put-tasks-notify-task-receiver',
-				on : function(request) {
+				id: 'store-put-tasks-notify-task-receiver',
+				on: function(request) {
 					request.accept({
-						topic : 'store',
-						action : 'put-notify',
-						collection : 'tasks'
+						topic: 'store',
+						action: 'put-notify',
+						collection: 'tasks'
 					});
 				}.bind(this),
-				run : function(stream) {
+				run: function(stream) {
 					console.log('Task receiver was notified that a task was updated.');
 					stream.next();
 				}.bind(this)
 			});
-			
+
 			this.connection.process({
-				id : 'store-put-patients-notify-task-receiver',
-				on : function(request) {
+				id: 'store-put-patients-notify-task-receiver',
+				on: function(request) {
 					request.accept({
-						topic : 'store',
-						action : 'put-notify',
-						collection : 'patients'
+						topic: 'store',
+						action: 'put-notify',
+						collection: 'patients'
 					});
 				}.bind(this),
-				run : function(stream) {
+				run: function(stream) {
 					console.log('Task receiver was notified that a patient was updated.');
 					stream.next();
 				}.bind(this)
 			});
 		}
 	}),
-	
-	Patient : Class.extend({
-		
-		connect : function(callback) {
-			
+
+	Patient: Class.extend({
+
+		connect: function(callback) {
+
 			this.bus.connect({
-				credentials : {
-					username : Credentials.get('patient-receiver').username,
-					passphrase : Credentials.get('patient-receiver').passphrase,
+				credentials: {
+					username: Credentials.get('patient-receiver').username,
+					passphrase: Credentials.get('patient-receiver').passphrase,
 				},
-				responded : function(result) {
+				responded: function(result) {
 					this.connection = result.connection;
 					this.process();
 					callback();
 				}.bind(this)
 			});
 		},
-		
-		process : function() {
-			
+
+		process: function() {
+
 			this.connection.process({
-				id : 'store-put-tasks-notify-patient-receiver',
-				on : function(request) {
+				id: 'store-put-tasks-notify-patient-receiver',
+				on: function(request) {
 					request.accept({
-						topic : 'store',
-						action : 'put-notify',
-						collection : 'tasks'
+						topic: 'store',
+						action: 'put-notify',
+						collection: 'tasks'
 					});
 				}.bind(this),
-				run : function(stream) {
+				run: function(stream) {
 					console.log('Patient receiver was notified that a task was updated.');
 					stream.next();
 				}.bind(this)
 			});
-			
+
 			this.connection.process({
-				id : 'store-put-patients-notify-patient-receiver',
-				on : function(request) {
+				id: 'store-put-patients-notify-patient-receiver',
+				on: function(request) {
 					request.accept({
-						topic : 'store',
-						action : 'put-notify',
-						collection : 'patients'
+						topic: 'store',
+						action: 'put-notify',
+						collection: 'patients'
 					});
 				}.bind(this),
-				run : function(stream) {
+				run: function(stream) {
 					console.log('Patient receiver was notified that a patient was updated.');
 					stream.next();
 				}.bind(this)

@@ -1,4 +1,3 @@
-
 var Class = require('../../godsend.js').Class;
 var Bus = require('../../godsend.js').Bus;
 var Server = require('../shared/server/Server');
@@ -7,12 +6,12 @@ var Credentials = require('../shared/server/Credentials');
 var Client = require('./client.js');
 
 Example = Class.extend({
-	
-	initialize : function(properties) {
-		
+
+	initialize: function(properties) {
+
 		new Server().start(function() {
 			new Authorizer({
-				users : this.users
+				users: this.users
 			}).connect(function() {
 				new Agent().connect(function() {
 					console.log('Everything has been started.');
@@ -21,85 +20,85 @@ Example = Class.extend({
 			});
 		}.bind(this));
 	},
-	
-   users : {
-		'agent' : {
-			credentials : {
-				username : Credentials.get('agent').username,
-				passphrase : Credentials.get('agent').passphrase,
+
+	users: {
+		'agent': {
+			credentials: {
+				username: Credentials.get('agent').username,
+				passphrase: Credentials.get('agent').passphrase,
 			},
-			patterns : {
-				sendable : [],
-				receivable : [{
-					topic : 'post-message'
+			patterns: {
+				sendable: [],
+				receivable: [{
+					topic: 'post-message'
 				}]
 			}
 		},
-		'public' : {
-			credentials : {
-				username : Credentials.get('public').username,
-				passphrase : '',
+		'public': {
+			credentials: {
+				username: Credentials.get('public').username,
+				passphrase: '',
 			},
-			patterns : {
-				sendable : [{
-					topic : 'authentication',
-					action : 'sign-in'
+			patterns: {
+				sendable: [{
+					topic: 'authentication',
+					action: 'sign-in'
 				}],
-				receivable : []
+				receivable: []
 			}
 		},
-		'client' : {
-			credentials : {
-				username : Credentials.get('client').username,
-				passphrase : Credentials.get('client').passphrase,
+		'client': {
+			credentials: {
+				username: Credentials.get('client').username,
+				passphrase: Credentials.get('client').passphrase,
 			},
-			patterns : {
-				sendable : [{
-					topic : 'post-message'
+			patterns: {
+				sendable: [{
+					topic: 'post-message'
 				}],
-				receivable : []
+				receivable: []
 			}
 		}
-   }
+	}
 });
 
 Agent = Class.extend({
-	
-	initialize : function(properties) {
-		
+
+	initialize: function(properties) {
+
 		Object.assign(this, properties);
 		this.storage = {};
 	},
-	
-	connect : function(callback) {
-		
+
+	connect: function(callback) {
+
 		new Bus({
-			address : 'http://127.0.0.1:8080/'
+			address: 'http://127.0.0.1:8080/'
 		}).connect({
-			credentials : {
-				username : Credentials.get('agent').username,
-				passphrase : Credentials.get('agent').passphrase,
+			credentials: {
+				username: Credentials.get('agent').username,
+				passphrase: Credentials.get('agent').passphrase,
 			},
-			responded : function(result) {
+			responded: function(result) {
 				this.connection = result.connection;
 				this.process();
 				callback();
 			}.bind(this)
 		});
 	},
-	
-	process : function() {
-		
+
+	process: function() {
+
 		this.connection.process({
-			id : 'post-message',
-			on : function(request) {
+			id: 'post-message',
+			on: function(request) {
 				request.accept({
-					topic : 'post-message'
+					topic: 'post-message'
 				});
 			}.bind(this),
-			run : function(stream) {
+			run: function(stream) {
 				stream.push({
-					message : 'Received the secure message from the client!'
+					message: 'Received the secure message from the client!'
 				});
 				stream.next();
 			}.bind(this)

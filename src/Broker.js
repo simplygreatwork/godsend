@@ -3,13 +3,13 @@ var ss = require('socket.io-stream');
 Broker = module.exports = Class.extend({
 
 	initialize: function(properties) {
-		
+
 		Object.assign(this, properties);
 		this.exchange.broker = this;
 	},
-	
+
 	start: function(callback) {
-		
+
 		console.log('Server.start');
 		this.connections = [];
 		var io = require('socket.io').listen(this.server);
@@ -43,18 +43,16 @@ Broker = module.exports = Class.extend({
 		if (this.secure) {
 			if (socket.credentials) {
 				this.exchange.exchange(request, stream, socket);
-			}
-			else {
+			} else {
 				console.log('Connection is missing credentials.');
 			}
-		}
-		else {
+		} else {
 			this.exchange.exchange(request, stream, socket);
 		}
 	},
 
 	authenticate: function(credentials, respond, socket) {
-		
+
 		if (this.exchange.authenticate) {
 			this.exchange.load(credentials, function() {
 				var authentic = this.exchange.authenticate(credentials);
@@ -68,8 +66,7 @@ Broker = module.exports = Class.extend({
 						},
 						errors: []
 					});
-				}
-				else {
+				} else {
 					var message = '"' + credentials.username + '" is not authentic.'
 					respond({
 						value: {
@@ -80,8 +77,7 @@ Broker = module.exports = Class.extend({
 					console.log(message);
 				}
 			}.bind(this));
-		}
-		else {
+		} else {
 			socket.credentials = credentials;
 			respond({
 				value: {},

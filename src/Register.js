@@ -1,42 +1,41 @@
-
 var toposort = require('toposort');
 var uuid = require('uuid/v4');
 var Class = require('./Class');
 var Utility = require('./Utility');
 
 Register = module.exports = Class.extend({
-	
-	initialize : function(properties) {
-		
+
+	initialize: function(properties) {
+
 		Object.assign(this, properties);
 		this.processors = [];
 		this.cache = {};
 	},
-	
-	addProcessor : function(processor) {
-		
+
+	addProcessor: function(processor) {
+
 		this.ensureProcessor(processor);
 		this.processors.push(processor);
 		this.sortProcessorsByVersion(this.processors);
 		this.checkConflicts();
-		this.cache = {};												// important: MUST invalidate any cached processors when adding
+		this.cache = {}; // important: MUST invalidate any cached processors when adding
 	},
-	
-	ensureProcessor : function(processor) {
-		
+
+	ensureProcessor: function(processor) {
+
 		processor.id = Utility.ensure(processor.id, uuid());
 		processor.weight = Utility.ensure(processor.weight, 0);
 		if (typeof processor.version != 'object') {
 			processor.version = {
-				name : processor.version,
-				'default' : false
+				name: processor.version,
+				'default': false
 			}
 		}
 		processor.version.name = Utility.ensure(processor.version.name, ' unversioned ');
 	},
-	
-	getProcessors : function(versions) {
-		
+
+	getProcessors: function(versions) {
+
 		var result = null;
 		versions = versions || {};
 		var key = Utility.stringify(versions);
@@ -48,14 +47,14 @@ Register = module.exports = Class.extend({
 		}
 		return result;
 	},
-	
-	assembleProcessors : function(versions) {
-		
+
+	assembleProcessors: function(versions) {
+
 		var result = [];
 		var previous = null;
 		var version = {
-			current : null,
-			applied : null
+			current: null,
+			applied: null
 		};
 		this.processors.forEach(function(each) {
 			if (previous == null) {
@@ -78,9 +77,9 @@ Register = module.exports = Class.extend({
 		result = this.sortProcessorsByExecution(result);
 		return result;
 	},
-	
-	sortProcessorsByVersion : function(processors) {						// should be sorted by id, then version ascending
-		
+
+	sortProcessorsByVersion: function(processors) { // should be sorted by id, then version ascending
+
 		processors.sort(function(a, b) {
 			var aa = a['id'] + a['version'].name;
 			var bb = b['id'] + b['version'].name;
@@ -93,13 +92,13 @@ Register = module.exports = Class.extend({
 			}
 		});
 	},
-	
-	sortProcessorsByExecution : function(processors) {		// rethink this entire algorithm
-																			// specifically the re-insertion of befores/afters
-		processors.forEach(function(each, index) {			// if a processor references "before", set it's weight to zero
+
+	sortProcessorsByExecution: function(processors) { // rethink this entire algorithm
+		// specifically the re-insertion of befores/afters
+		processors.forEach(function(each, index) { // if a processor references "before", set it's weight to zero
 			if (each.before || each.after) each.weight = 0;
 		}.bind(this));
-		processors.sort(function(a, b) {							// sort by weights
+		processors.sort(function(a, b) { // sort by weights
 			return a.weight - b.weight;
 		}.bind(this));
 		var graph = [];
@@ -110,14 +109,14 @@ Register = module.exports = Class.extend({
 				graph.push([this.findProcessor(processors, each.after), each]);
 			}
 		}.bind(this));
-		var selection = toposort(graph);							// only sort "befores/afters" by themselves
-		selection.forEach(function(each) {						// else potential for cyclic hell
-			var index = processors.indexOf(each);				// issue: consider ensuring that all "before/after" ref weights are identical
+		var selection = toposort(graph); // only sort "befores/afters" by themselves
+		selection.forEach(function(each) { // else potential for cyclic hell
+			var index = processors.indexOf(each); // issue: consider ensuring that all "before/after" ref weights are identical
 			if (index > -1) processors.splice(index, 1);
 		}.bind(this));
 		var result = [];
 		if (processors.length > 0) {
-			for (var i = 0; i < processors.length; i++) {		// and then reinsert the "befores/afters" back into the list
+			for (var i = 0; i < processors.length; i++) { // and then reinsert the "befores/afters" back into the list
 				this.getMatchingWeights(selection, processors[i].weight).forEach(function(each) {
 					result.push(each);
 				}.bind(this));
@@ -128,9 +127,9 @@ Register = module.exports = Class.extend({
 		}
 		return result;
 	},
-	
-	getMatchingWeights : function(selection, weight) {
-		
+
+	getMatchingWeights: function(selection, weight) {
+
 		var result = [];
 		for (var i = selection.length - 1; i >= 0; i--) {
 			if (selection[i].weight == weight) {
@@ -140,9 +139,9 @@ Register = module.exports = Class.extend({
 		}
 		return result;
 	},
-	
-	findProcessor : function(processors, id) {
-		
+
+	findProcessor: function(processors, id) {
+
 		var result = null;
 		processors.forEach(function(each) {
 			if (each.id == id) {
@@ -151,9 +150,9 @@ Register = module.exports = Class.extend({
 		});
 		return result;
 	},
-	
-	checkConflicts : function() {
-		
+
+	checkConflicts: function() {
+
 		var conflicts = [];
 		var previous = null;
 		this.processors.forEach(function(each) {
