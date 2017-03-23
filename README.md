@@ -37,12 +37,15 @@ https://www.notion.so/Messaging-30c17b4e590f44689d9571f1f1f690c0
 
 ### Create a bus to be able to connect to the broker
 
+```
 	this.bus = new Bus({
 	 	address : 'http://127.0.0.1:8080'
 	});
+```
 
 ### Connect to the broker initially as a public user
 
+```
 	this.bus.connect({
 		credentials : {
 			username : 'client-public',
@@ -53,6 +56,7 @@ https://www.notion.so/Messaging-30c17b4e590f44689d9571f1f1f690c0
 			this.process();
 		}.bind(this)
 	});
+```
 
 ### Change the credentials to become an admin user 
 
