@@ -15,6 +15,7 @@ module.exports = {
 	Request : require('./src/Request'),
 	Response : require('./src/Response'),
 	Sequence : require('./src/Sequence'),
+	Server : require('./src/Server'),
 	SocketServer : require('./src/SocketServer'),
 	Stream : require('./src/Stream'),
 	Transport : require('./src/Transport'),
