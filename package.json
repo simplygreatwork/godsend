@@ -1,10 +1,10 @@
 {
   "name": "godsend",
-  "description": "Godsend: simple and elegant messaging for microservices.",
+  "description": "Godsend: simple and elegant message streaming for microservices.",
   "author": "Philip Weaver",
   "contributors": [],
   "version": "0.2.0",
-  "main": "",
+  "main": "./main.js",
   "scripts": {
     "start": "node tests/main.js"
   },

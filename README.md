@@ -1,5 +1,5 @@
 # Godsend
-Simple and elegant message streaming for microservices
+Simple and elegant messaging for microservices
 
 The current version (0.2.0) now supports message streaming. As of March 23/2017, version 0.2.0 has not yet been published to NPM.
 
@@ -18,9 +18,10 @@ The current version (0.2.0) now supports message streaming. As of March 23/2017,
 
 ### Getting Started
 
-When loading client pages in your browser, check the JavaScript console for message output.
+`npm install godsend`
+`npm install godsend-examples`
 
-   e.g. http://127.0.0.1/examples/
+To get started, you likely want to install and run the god-examples and initially not godsend itself.
 
 https://www.notion.so/Messaging-30c17b4e590f44689d9571f1f1f690c0
 
@@ -29,9 +30,9 @@ https://www.notion.so/Messaging-30c17b4e590f44689d9571f1f1f690c0
 
 ### Public Development @ Cloud9
 
-[Cloud9 Preview](https://preview.c9users.io/simplygreatwork/godsend/godsend/)
+[Cloud9 Preview](https://preview.c9users.io/philmaker/messaging/godsend/)
 
-[Sign-in | Cloud9 IDE - Ajax.org](https://ide.c9.io/simplygreatwork/godsend/)
+[Sign-in | Cloud9 IDE - Ajax.org](https://ide.c9.io/philmaker/messaging)
 
 ### Examples
 
