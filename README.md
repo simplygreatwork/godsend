@@ -14,24 +14,28 @@ Simple and elegant message streaming for microservices
    - Universal/isomorphic (in the browser and in Node.js)
    - The messaging scheme is totally open and configurable per processor and is not necessary predetermined to use wildcards or regular expressions for pattern matching. But you can. The default and intended scheme is to match multiple property/value pairs within an object.
 
+### Online Example
+
+[Godsend Examples @ Runkit](https://runkit.com/simplygreatwork/godsend-examples)
+
 ### Getting Started
 
 `npm install godsend`
 
 `npm install godsend-examples`
 
-To get started, you likely want to install and run the godsend-examples and initially not godsend itself.
-
-https://www.notion.so/Messaging-30c17b4e590f44689d9571f1f1f690c0
+Initially, you likely want to install and run the godsend-examples and not godsend itself.
 
 - This project is not currently suitable for production.
 - Security, error handling, and fault tolerance need more evaluation.
 
+https://www.notion.so/Messaging-30c17b4e590f44689d9571f1f1f690c0
+
 ### Public Development @ Cloud9
 
-[Cloud9 Preview](https://preview.c9users.io/philmaker/messaging/godsend/)
+[Cloud9 Preview](https://preview.c9users.io/simplygreatwork/godsend/godsend/)
 
-[Sign-in | Cloud9 IDE - Ajax.org](https://ide.c9.io/philmaker/messaging)
+[Sign-in | Cloud9 IDE - Ajax.org](https://ide.c9.io/simplygreatwork/godsend/)
 
 ### Examples
 
