@@ -19,9 +19,10 @@ The current version (0.2.0) now supports message streaming. As of March 23/2017,
 ### Getting Started
 
 `npm install godsend`
+
 `npm install godsend-examples`
 
-To get started, you likely want to install and run the god-examples and initially not godsend itself.
+To get started, you likely want to install and run the godsend-examples and initially not godsend itself.
 
 https://www.notion.so/Messaging-30c17b4e590f44689d9571f1f1f690c0
 
