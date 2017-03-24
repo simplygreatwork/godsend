@@ -14,7 +14,7 @@ Simple and elegant message streaming for microservices
    - Universal/isomorphic (in the browser and in Node.js)
    - The messaging scheme is totally open and configurable per processor and is not necessary predetermined to use wildcards or regular expressions for pattern matching. But you can. The default and intended scheme is to match multiple property/value pairs within an object.
 
-### Online Example
+### Online Examples
 
 [Godsend Examples @ Runkit](https://runkit.com/simplygreatwork/godsend-examples)
 
