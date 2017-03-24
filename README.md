@@ -1,8 +1,6 @@
 # Godsend
 Simple and elegant message streaming for microservices
 
-The current version (0.2.0) now supports message streaming. As of March 23/2017, version 0.2.0 has not yet been published to NPM.
-
 ### Key Features
 
 - Streaming: send messages to the bus as a stream and process messages as a stream.
