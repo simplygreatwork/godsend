@@ -4,9 +4,9 @@ var Bus = require('./Bus');
 var User = require('./User');
 
 var Open = Class.extend({
-
+	
 	initialize: function(properties) {
-
+		
 		Object.assign(this, properties);
 	},
 
@@ -14,9 +14,9 @@ var Open = Class.extend({
 
 		callback();
 	},
-
+	
 	exchange: function(request, stream, connection) {
-
+		
 		this.manage(stream);
 		this.broker.connections.forEach(function(connection) {
 			this.broadcast(request, stream, connection);
@@ -99,14 +99,14 @@ var Open = Class.extend({
 });
 
 var Secure = Open.extend({
-
+	
 	initialize: function(properties) {
 
 		Object.assign(this, properties);
 		this.initializeUsers();
 		this.initializeBus();
 	},
-
+	
 	initializeUsers: function() {
 		
 		this.users = this.users || require('./users.json');
@@ -226,7 +226,14 @@ var Secure = Open.extend({
 	},
 
 	exchange: function(request, stream, connection) {
-
+		
+		Object.keys(this.users).forEach(function(key) {					// issue: somewhere the users are being reset incorrectly
+			var user = this.users[key];
+			if (! (user.isSendable)) {
+				this.users[key] = new User(this.users[key]);
+			}
+		}.bind(this));
+		
 		this.manage(stream);
 		var username = connection.credentials.username;
 		var user = this.users[username];
@@ -262,8 +269,27 @@ var Learning = Secure.extend({
 		this.initializeBus();
 	},
 	
+	initializeUsers: function() {
+		
+		this.users = this.users || require('./users.json');
+		if (this.users) {
+			Object.keys(this.users).forEach(function(key) {
+				this.users[key] = new User(this.users[key]);
+			}.bind(this));
+		} else {
+			throw new Error('The secure exchange must be provided basic users.');
+		}
+	},
+	
 	exchange: function(request, stream, connection) {
 		
+		Object.keys(this.users).forEach(function(key) {					// issue: somewhere the users are being reset incorrectly
+			var user = this.users[key];
+			if (! (user.isSendable)) {
+				this.users[key] = new User(this.users[key]);
+			}
+		}.bind(this));
+
 		this.manage(stream);
 		var username = connection.credentials.username;
 		var user = this.users[username];
@@ -286,20 +312,20 @@ var Learning = Secure.extend({
 			this.err(response, 'The sender "' + username + '" is not allowed to send the pattern: ' + JSON.stringify(request.pattern));
 		}
 	},
-
+	
 	received: function(request, stream, connection) {
-
+		
 		var username = connection.credentials.username;
 		var user = this.users[username];
 		this.learn('receivable', request, user);
 	},
-
+	
 	learn: function(type, request, user, callback) {
-
+		
 		if (!Utility.matchesProperties(request.pattern, {
 				topic: 'authentication',
 				action: 'put-user'
-			})) {
+		})) {
 			var added = user.addPattern(type, request.pattern);
 			if (added) {
 				console.log('Updated "' + type + '" for user "' + user.credentials.username + '".');
@@ -312,7 +338,7 @@ var Learning = Secure.extend({
 	},
 
 	save: function(user, callback) {
-
+	
 		this.connection.send({
 			pattern: {
 				topic: 'authentication',
