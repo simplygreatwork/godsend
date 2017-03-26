@@ -108,7 +108,7 @@ var Secure = Open.extend({
 	},
 
 	initializeUsers: function() {
-
+		
 		this.users = this.users || require('./users.json');
 		if (this.users) {
 			Object.keys(this.users).forEach(function(key) {
@@ -254,16 +254,16 @@ var Secure = Open.extend({
 });
 
 var Learning = Secure.extend({
-
+	
 	initialize: function(properties) {
-
+		
 		Object.assign(this, properties);
 		this.initializeUsers();
 		this.initializeBus();
 	},
-
+	
 	exchange: function(request, stream, connection) {
-
+		
 		this.manage(stream);
 		var username = connection.credentials.username;
 		var user = this.users[username];
