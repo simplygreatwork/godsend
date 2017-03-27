@@ -1,4 +1,6 @@
 # Godsend
+
+[![Join the chat at https://gitter.im/god-send/Lobby](https://badges.gitter.im/god-send/Lobby.svg)](https://gitter.im/god-send/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 Simple and elegant message streaming for microservices
 
 ### Key Features
