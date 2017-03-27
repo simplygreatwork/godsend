@@ -1,6 +1,8 @@
 # Godsend
 Simple and elegant message streaming for microservices
 
+[![Join the chat at https://gitter.im/god-send/Lobby](https://badges.gitter.im/god-send/Lobby.svg)](https://gitter.im/god-send/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 ### Key Features
 
 - Streaming: send messages to the bus as a stream and process messages as a stream.
