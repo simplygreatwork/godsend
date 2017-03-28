@@ -4,7 +4,7 @@
   "author": "Philip Weaver",
   "contributors": [],
   "version": "0.2.14",
-  "main": "./main.js",
+  "main": "./src/main-node.js",
   "scripts": {
     "start": "node tests/main.js"
   },

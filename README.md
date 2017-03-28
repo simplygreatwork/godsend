@@ -3,12 +3,12 @@
 # Godsend
 Simple and elegant message streaming for microservices
 
-[![Join the chat at https://gitter.im/godsendbus/Lobby](https://badges.gitter.im/god-send/Lobby.svg)](https://gitter.im/god-send/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Join the chat at https://gitter.im/godsendbus/Lobby](https://badges.gitter.im/godsendbus/Lobby.svg)](https://gitter.im/god-send/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 ### Key Features
 
 - Streaming: send messages to the bus as a stream and process messages as a stream.
-- Mutable composition: inject message processors from any location in your project to decouple concerns such as validation and transformation.
+- Mutable composition: inject message processors to filter the stream from any location in your project to decouple concerns such as validation and transformation.
 - Multiple message processors are able to process, filter, and transform a particular message request in a controlled, composed order.
 - The secure messaging exchange learns authorization automatically (with exercise).
 - Message processors may be versioned according to the connected user. Processor versions are dynamically substituted in the processor list upon each user's request.
