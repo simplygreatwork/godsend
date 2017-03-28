@@ -19,7 +19,7 @@ Simple and elegant message streaming for microservices
 
 ### Online Examples
 
-[Godsend Examples @ Runkit](https://www.notion.so/Examples-0ceecf7945ac4b198c340fbf36075cda)
+[Godsend Examples @ RunKit](https://www.notion.so/Examples-0ceecf7945ac4b198c340fbf36075cda)
 
 ### Getting Started
 
