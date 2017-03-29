@@ -50,7 +50,7 @@ Broker = module.exports = Class.extend({
 			this.exchange.exchange(request, stream, socket);
 		}
 	},
-
+	
 	authenticate: function(credentials, respond, socket) {
 		
 		if (this.exchange.authenticate) {

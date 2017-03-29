@@ -190,7 +190,7 @@ var Secure = Open.extend({
 				connection.credentials = null;
 				delete connection.credentials;
 				stream.push({
-					authorized : false
+					authenticated : false
 				});
 				stream.next();
 			}.bind(this)

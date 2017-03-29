@@ -44,7 +44,7 @@ Connection = module.exports = Class.extend({
 	},
 
 	send: function(properties) {
-
+		
 		var result = {
 			objects: [],
 			errors: []
@@ -95,16 +95,16 @@ Connection = module.exports = Class.extend({
 				streams.main.process.write(value);
 			}
 		}.bind(this));
-		this.getProcess(request.pattern, streams, function(process) {
+		this.getProcess(request, streams, function(process) {
 			streams.main.process = process;
 		}.bind(this));
 	},
 
-	getProcess: function(pattern, streams, callback) {
+	getProcess: function(request, streams, callback) {
 
 		var request = new Request({
-			pattern: pattern,
-			candidates: this.register.getProcessors()
+			pattern: request.pattern,
+			candidates: this.register.getProcessors(request.versions)
 		});
 		request.prepare(function() {
 			var process = new Process({

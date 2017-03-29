@@ -2,7 +2,7 @@ var Class = require('./Class');
 var Processor = require('./Processor');
 
 Process = module.exports = Class.extend({
-
+	
 	initialize: function(properties) {
 
 		Object.assign(this, properties);

@@ -22,7 +22,7 @@ Register = module.exports = Class.extend({
 	},
 
 	ensureProcessor: function(processor) {
-
+		
 		processor.id = Utility.ensure(processor.id, uuid());
 		processor.weight = Utility.ensure(processor.weight, 0);
 		if (typeof processor.version != 'object') {
@@ -33,9 +33,9 @@ Register = module.exports = Class.extend({
 		}
 		processor.version.name = Utility.ensure(processor.version.name, ' unversioned ');
 	},
-
+	
 	getProcessors: function(versions) {
-
+		
 		var result = null;
 		versions = versions || {};
 		var key = Utility.stringify(versions);
@@ -49,7 +49,7 @@ Register = module.exports = Class.extend({
 	},
 
 	assembleProcessors: function(versions) {
-
+		
 		var result = [];
 		var previous = null;
 		var version = {
@@ -79,7 +79,7 @@ Register = module.exports = Class.extend({
 	},
 
 	sortProcessorsByVersion: function(processors) { // should be sorted by id, then version ascending
-
+		
 		processors.sort(function(a, b) {
 			var aa = a['id'] + a['version'].name;
 			var bb = b['id'] + b['version'].name;
