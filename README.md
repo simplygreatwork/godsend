@@ -30,6 +30,7 @@ Simple and elegant message streaming for microservices
 
 Initially, you likely want to install and run the godsend-examples and not godsend itself.
 
+- IMPORTANT: Run each example from directly inside its own directory. (e.g. > cd ./transforming-data/  node example.js)
 - This project is not currently suitable for production.
 - Security, error handling, and fault tolerance need more evaluation.
 
