@@ -11,7 +11,7 @@ var Open = Class.extend({
 	},
 
 	connect: function(callback) {
-
+		
 		callback();
 	},
 	
@@ -101,7 +101,7 @@ var Open = Class.extend({
 var Secure = Open.extend({
 	
 	initialize: function(properties) {
-
+		
 		Object.assign(this, properties);
 		this.initializeUsers();
 		this.initializeBus();
@@ -111,6 +111,7 @@ var Secure = Open.extend({
 		
 		this.users = this.users || require('./users.json');
 		if (this.users) {
+			this.users = JSON.parse(JSON.stringify(this.users));
 			Object.keys(this.users).forEach(function(key) {
 				this.users[key] = new User(this.users[key]);
 			}.bind(this));
@@ -118,7 +119,7 @@ var Secure = Open.extend({
 			throw new Error('The secure exchange must be provided basic users.');
 		}
 	},
-
+	
 	initializeBus: function() {
 
 		this.bus = new Bus({
@@ -263,15 +264,8 @@ var Secure = Open.extend({
 		}
 		return result;
 	},
-
+	
 	exchange: function(request, stream, connection) {
-		
-		Object.keys(this.users).forEach(function(key) {					// issue: somewhere the users are being reset incorrectly
-			var user = this.users[key];
-			if (! (user.isSendable)) {
-				this.users[key] = new User(this.users[key]);
-			}
-		}.bind(this));
 		
 		this.manage(stream);
 		var username = connection.credentials.username;
@@ -312,6 +306,7 @@ var Learning = Secure.extend({
 		
 		this.users = this.users || require('./users.json');
 		if (this.users) {
+			this.users = JSON.parse(JSON.stringify(this.users));
 			Object.keys(this.users).forEach(function(key) {
 				this.users[key] = new User(this.users[key]);
 			}.bind(this));
@@ -322,13 +317,6 @@ var Learning = Secure.extend({
 	
 	exchange: function(request, stream, connection) {
 		
-		Object.keys(this.users).forEach(function(key) {					// issue: somewhere the users are being reset incorrectly
-			var user = this.users[key];
-			if (! (user.isSendable)) {
-				this.users[key] = new User(this.users[key]);
-			}
-		}.bind(this));
-
 		this.manage(stream);
 		var username = connection.credentials.username;
 		var user = this.users[username];
