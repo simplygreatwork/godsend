@@ -22,9 +22,9 @@ var Open = Class.extend({
 			this.broadcast(request, stream, connection);
 		}.bind(this));
 	},
-
+	
 	manage: function(stream) {
-
+		
 		stream.restreams = [];
 		stream.finished = 0;
 		stream.main.on('readable', function() {
@@ -142,9 +142,9 @@ var Secure = Open.extend({
 			}.bind(this)
 		});
 	},
-
-	process: function() { // the signin receiver should probably be external : remove this
-
+	
+	process: function() { // the signin receiver should probably be on a separate external bus
+		
 		this.connection.process({
 			id: 'authentication-sign-in',
 			on: function(request) {
@@ -163,6 +163,7 @@ var Secure = Open.extend({
 					if (authentic) {
 						var connection = this.broker.findConnection(stream.request.connection);
 						connection.credentials = credentials;
+						this.notify('presence', 'online', credentials.username);
 					} else {
 						stream.error({
 							message: 'That user could not be authenticated.'
@@ -173,8 +174,46 @@ var Secure = Open.extend({
 				}.bind(this));
 			}.bind(this)
 		});
+		
+		this.connection.process({
+			id: 'authentication-sign-out',
+			on: function(request) {
+				request.accept({
+					topic: 'authentication',
+					action: 'sign-out'
+				});
+			}.bind(this),
+			run: function(stream) {
+				var connection = this.broker.findConnection(stream.request.connection);
+				this.notify('presence', 'offline', connection.credentials.username);
+				connection.credentials = null;
+				delete connection.credentials;
+				stream.push({
+					authorized : false
+				});
+				stream.next();
+			}.bind(this)
+		});
 	},
-
+	
+	notify : function(topic, action, username, callback) {
+		
+		if (this.connection) {
+			this.connection.send({
+				pattern: {
+					topic: topic,
+					action: action
+				},
+				data: {
+					username: username
+				},
+				receive: function(result) {
+					if (callback) callback();
+				}.bind(this)
+			});
+		}
+	},
+	
 	err: function(stream, message) {
 
 		Logger.get('exchange').error(message);

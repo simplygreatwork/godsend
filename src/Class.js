@@ -1,7 +1,7 @@
 Class = module.exports = {
-
+	
 	extend: function(properties) {
-
+		
 		var superProto = this.prototype || Class;
 		var proto = Object.create(superProto);
 		Class.copy(properties, proto);

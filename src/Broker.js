@@ -52,7 +52,7 @@ Broker = module.exports = Class.extend({
 	},
 
 	authenticate: function(credentials, respond, socket) {
-
+		
 		if (this.exchange.authenticate) {
 			this.exchange.load(credentials, function() {
 				var authentic = this.exchange.authenticate(credentials);
@@ -60,6 +60,7 @@ Broker = module.exports = Class.extend({
 					socket.credentials = credentials;
 					var message = '"' + credentials.username + '" is authentic.'
 					console.log(message);
+					this.exchange.notify('presence', 'online', credentials.username);
 					respond({
 						value: {
 							authentic: authentic
