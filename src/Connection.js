@@ -85,7 +85,7 @@ Connection = module.exports = Class.extend({
 	},
 
 	receive: function(request, streams) {
-
+		
 		streams.main.on('end', function() {
 			streams.main.process.end();
 		}.bind(this));

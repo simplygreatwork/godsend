@@ -3,7 +3,7 @@ var assert = require('proclaim');
 Assert = module.exports = {
 
 	pattern: function(pattern) {
-
+		
 		try {
 			assert.ok(pattern, 'The message pattern is missing from the request.');
 		} catch (e) {

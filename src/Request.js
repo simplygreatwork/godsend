@@ -10,13 +10,13 @@ Request = module.exports = Class.extend({
 		this.index = -1;
 		this.cacheable = true;
 	},
-
+	
 	prepare: function(callback) {
-
+		
 		this.callback = callback;
 		this.next();
 	},
-
+	
 	next: function() {
 
 		this.index++;
