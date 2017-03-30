@@ -20,7 +20,7 @@ SocketServer = module.exports = Class.extend({
 	},
 
 	start: function(callback) {
-
+		
 		this.broker.start(function() {
 			Logger.get('server').info('The broker has been started.');
 			this.broker.exchange.connect(function() {
