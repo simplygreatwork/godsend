@@ -10,15 +10,16 @@ SocketServer = module.exports = Class.extend({
 		this.exchange = this.exchange || new exchange.Open(); // Open || Secure
 		this.initializeBroker();
 	},
-
+	
 	initializeBroker: function() {
-
+		
 		this.broker = new Broker({
 			server: this.server,
+			address : this.address,
 			exchange: this.exchange
 		});
 	},
-
+	
 	start: function(callback) {
 		
 		this.broker.start(function() {

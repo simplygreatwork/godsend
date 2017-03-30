@@ -50,8 +50,12 @@ module.exports = Class.extend({
 				username: Credentials.get('logger').username,
 				passphrase: Credentials.get('logger').passphrase,
 			},
-			responded: function(result) {
-				this.connection = result.connection;
+			connected: function(connection) {
+				this.connection = connection;
+				if (callback) callback();
+			}.bind(this),
+			errored : function(errors) {
+				console.error('Connection errors: ' + errors);
 				if (callback) callback();
 			}.bind(this)
 		});

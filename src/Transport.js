@@ -10,7 +10,7 @@ Transport = module.exports = Class.extend({
 	},
 
 	connect: function(callback) {
-
+		
 		this.socket = io.connect(this.address, {
 			secure: this.secure || false,
 			reconnection: true,

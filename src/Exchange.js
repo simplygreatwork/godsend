@@ -104,7 +104,6 @@ var Secure = Open.extend({
 		
 		Object.assign(this, properties);
 		this.initializeUsers();
-		this.initializeBus();
 	},
 	
 	initializeUsers: function() {
@@ -120,33 +119,35 @@ var Secure = Open.extend({
 		}
 	},
 	
-	initializeBus: function() {
-
-		this.bus = new Bus({
-			address: 'http://127.0.0.1:8080/',
-		});
-	},
-
 	connect: function(callback) { // authentication data will come from over the bus
 
+		this.bus = new Bus({
+			address: this.broker.address
+		});
 		this.bus.connect({
 			credentials: {
 				username: 'broker',
 				passphrase: 'passphrase-to-hash'
 			},
-			responded: function(result) { // next: now update broker and master user records (the patterns at least)
+			initialized : function(connection) {
+				this.process(connection);
+			}.bind(this),
+			connected: function(connection) { // next: now update broker and master user records (the patterns at least)
 				this.connected = true;
 				Logger.get('exchange').info('The secure broker exchange is now connected to the bus as a client.');
-				this.connection = result.connection;
-				this.process();
+				this.connection = connection;
+				callback();
+			}.bind(this),
+			errored : function(errors) {
+				console.error('Connection errors: ' + errors);
 				callback();
 			}.bind(this)
 		});
 	},
 	
-	process: function() { // the signin receiver should probably be on a separate external bus
+	process: function(connection) { // the signin receiver should probably be on a separate external bus
 		
-		this.connection.process({
+		connection.process({
 			id: 'authentication-sign-in',
 			on: function(request) {
 				request.accept({
@@ -176,7 +177,7 @@ var Secure = Open.extend({
 			}.bind(this)
 		});
 		
-		this.connection.process({
+		connection.process({
 			id: 'authentication-sign-out',
 			on: function(request) {
 				request.accept({
@@ -298,8 +299,6 @@ var Learning = Secure.extend({
 	initialize: function(properties) {
 		
 		Object.assign(this, properties);
-		this.initializeUsers();
-		this.initializeBus();
 	},
 	
 	initializeUsers: function() {

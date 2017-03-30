@@ -152,7 +152,7 @@ Register = module.exports = Class.extend({
 	},
 
 	checkConflicts: function() {
-
+		
 		var conflicts = [];
 		var previous = null;
 		this.processors.forEach(function(each) {
