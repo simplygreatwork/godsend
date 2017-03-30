@@ -299,6 +299,7 @@ var Learning = Secure.extend({
 	initialize: function(properties) {
 		
 		Object.assign(this, properties);
+		this.initializeUsers();
 	},
 	
 	initializeUsers: function() {
