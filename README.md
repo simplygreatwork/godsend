@@ -29,7 +29,9 @@ Set the broker's exchange into learning mode. Continue to develop your applicati
 ### Getting Started
 
 `npm install godsend-examples`
+
 `cd ./node_modules/godsend-examples/examples/storing-data`
+
 `PORT=8082 node example.js`
 
 Initially, you likely want to install and run the godsend-examples and not godsend itself.
