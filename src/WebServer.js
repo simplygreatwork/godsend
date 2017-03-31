@@ -14,8 +14,9 @@ WebServer = module.exports = Class.extend({
 			Logger.get('server').info('Starting server in HTTP mode.');
 			this.server = require('http').createServer(express);
 		}
-		this.server.listen(process.env.PORT || 8080, process.env.IP);
-		console.log('Listening on port ' + process.env.PORT);
+		var port = process.env.PORT || 8080;
+		this.server.listen(port, process.env.IP);
+		console.log('Listening on port ' + port + '.');
 		callback(express);
 	}
 });

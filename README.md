@@ -1,9 +1,13 @@
 ![Godsend Logo](https://s3-us-west-2.amazonaws.com/notion-static/a7b5b59c35b2480e90126eadd33cf81f/godsend.png "Godsend Logo")
 
 # Godsend
-Simple and elegant message streaming for microservices
+A simple workflow for streaming messages to micro-services.
 
 [![Join the chat at https://gitter.im/godsendbus/Lobby](https://badges.gitter.im/godsendbus/Lobby.svg)](https://gitter.im/god-send/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
+An important goal for Godsend is to ease your software development workflow without tedium. For example, quickly save data to any undefined collection during the development process. Go back later to add validation for a collection as a message pattern processor on the bus in any order from anywhere in your application at any time. Then, add a data transformation processor from some other location in your project. Multiple message pattern processors are able to manage and filter the same request stream — yet decoupled. Composed, not chained.
+
+Set the broker's exchange into learning mode. Continue to develop your application. Then, when you're ready to publish, do a quick authorization review, then publish using the secure broker exchange. Since user authorization is based on message patterns, access to undefined collections becomes prohibited and access to resources for unauthorized users also gets locked down. Versioning of message pattern processors is based on the exchange's configuration of the user sending the request — not the content of that sent message pattern.
 
 ### Key Features
 
@@ -24,13 +28,13 @@ Simple and elegant message streaming for microservices
 
 ### Getting Started
 
-`npm install godsend`
-
 `npm install godsend-examples`
+`cd ./node_modules/godsend-examples/examples/storing-data`
+`PORT=8082 node example.js`
 
 Initially, you likely want to install and run the godsend-examples and not godsend itself.
 
-- IMPORTANT: Run each example from directly inside its own directory. (e.g. > cd ./transforming-data/  node example.js)
+- IMPORTANT: Run each example from directly inside its own directory. (e.g. > cd ./transforming-data/  PORT=8082 node example.js)
 - This project is not currently suitable for production.
 - Security, error handling, and fault tolerance need more evaluation.
 
