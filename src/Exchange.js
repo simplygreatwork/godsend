@@ -2,6 +2,7 @@ var ss = require('socket.io-stream');
 var Logger = require('js-logger');
 var Bus = require('./Bus');
 var User = require('./User');
+var Utility = require('./Utility');
 
 var Open = Class.extend({
 	

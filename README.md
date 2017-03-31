@@ -11,7 +11,7 @@ Simple and elegant message streaming for microservices
 - Mutable composition: inject message processors to filter the stream from any location in your project to decouple concerns such as validation and transformation.
 - Multiple message processors are able to process, filter, and transform a particular message request in a controlled, composed order.
 - The secure messaging exchange learns authorization automatically (with exercise).
-- Message processors may be versioned according to the connected user. Processor versions are dynamically substituted in the processor list upon each user's request.
+- Message processors may be versioned according to the connected user. Processor versions are dynamically substituted in the processor list upon each user's request. The broker exchange, not the sender, determines the processor version from the sending user's configuration.
 - Property-based message patterns.
 - A clean, concise, yet expressive API
 - Few assumptions

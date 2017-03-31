@@ -10,9 +10,9 @@ module.exports = Class.extend({
 		this.initializeHandlers();
 		this.remotes = [];
 	},
-
+	
 	initializeLogger: function() {
-
+		
 		Logger.useDefaults();
 		Logger.setLevel(Logger.INFO);
 		Logger.get('broker').setLevel(Logger.INFO);
@@ -27,9 +27,9 @@ module.exports = Class.extend({
 		Logger.get('server-web').setLevel(Logger.INFO);
 		Logger.get('server-socket').setLevel(Logger.INFO);
 	},
-
+	
 	initializeHandlers: function() {
-
+		
 		this.handlers = {
 			'default': Logger.createDefaultHandler(),
 			'push': this.push.bind(this)
@@ -39,13 +39,12 @@ module.exports = Class.extend({
 			this.handlers['push'](messages, context);
 		}.bind(this));
 	},
-
+	
 	connect: function(callback) {
-
-		this.bus = new Bus({
-			address: 'http://127.0.0.1:8080/'
-		});
-		this.bus.connect({
+		
+		new Bus({
+			address: this.address || 'http://127.0.0.1:' + (process.env.PORT || 8080) + '/'
+		}).connect({
 			credentials: {
 				username: Credentials.get('logger').username,
 				passphrase: Credentials.get('logger').passphrase,
