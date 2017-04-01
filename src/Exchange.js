@@ -10,7 +10,7 @@ var Open = Class.extend({
 		
 		Object.assign(this, properties);
 	},
-
+	
 	connect: function(callback) {
 		
 		callback();

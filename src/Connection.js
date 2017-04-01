@@ -101,7 +101,7 @@ Connection = module.exports = Class.extend({
 	},
 
 	getProcess: function(request, streams, callback) {
-
+		
 		var request = new Request({
 			pattern: request.pattern,
 			candidates: this.register.getProcessors(request.versions)
