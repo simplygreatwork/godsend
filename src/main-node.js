@@ -14,7 +14,6 @@ module.exports = {
 	Register : require('./Register'),
 	Request : require('./Request'),
 	Response : require('./Response'),
-	Sequence : require('./Sequence'),
 	Server : require('./Server'),
 	SocketServer : require('./SocketServer'),
 	Stream : require('./Stream'),
