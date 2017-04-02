@@ -61,7 +61,7 @@ Connection = module.exports = Class.extend({
 			var error = stream.error.read();
 			if (error && typeof error == 'object') {
 				result.errors.push(error);
-				if (properties.error) properties.error(value);
+				if (properties.error) properties.error(error);
 			}
 		});
 		stream.main.on('end', function() {
@@ -83,7 +83,7 @@ Connection = module.exports = Class.extend({
 			if (properties.write) properties.write(stream);
 		}
 	},
-
+	
 	receive: function(request, streams) {
 		
 		streams.main.on('end', function() {
@@ -99,7 +99,7 @@ Connection = module.exports = Class.extend({
 			streams.main.process = process;
 		}.bind(this));
 	},
-
+	
 	getProcess: function(request, streams, callback) {
 		
 		var request = new Request({
@@ -118,7 +118,7 @@ Connection = module.exports = Class.extend({
 	},
 
 	process: function(processor) {
-
+			
 		this.register.addProcessor(processor);
 	}
 });
