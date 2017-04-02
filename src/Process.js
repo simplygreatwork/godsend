@@ -4,7 +4,7 @@ var Processor = require('./Processor');
 Process = module.exports = Class.extend({
 	
 	initialize: function(properties) {
-
+		
 		Object.assign(this, properties);
 		this.assemble();
 	},
@@ -16,6 +16,7 @@ Process = module.exports = Class.extend({
 				id: each.id,
 				weight: each.weight,
 				process: each.run,
+				ending: each.ending,
 				errors: this.streams.error,
 				request: this.request,
 				response: this.response
