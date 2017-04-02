@@ -17,31 +17,64 @@ function Processor(properties) {
 util.inherits(Processor, Transform);
 
 Object.assign(Processor.prototype, {
-
+	
 	initializeTransform: function() {
 		
-		this.stream = {
-			request: this.request,
-			response: this.response,
-			push: this.push.bind(this),
-			err: this.err.bind(this)
-		};
 		if (this.expressive) {
 			this._transform = function(chunk, encoding, next) {
-				this.stream.object = chunk;
-				this.stream.encoding = encoding;
-				this.stream.next = next;
-				this.process(this.stream);
+				this.process({
+					actual : this,
+					object : chunk,
+					encoding : encoding,
+					next : next,
+					push: this.push.bind(this),
+					err: this.err.bind(this),
+					request: this.request,
+					response: this.response
+				});
 			};
+			this._flush = function(next) {
+				if (this.ending) {
+					this.ending({
+						actual : this,
+						next : next,
+						request: this.request,
+						response: this.response,
+						push: this.push.bind(this),
+						err: this.err.bind(this),
+					});
+				} else {
+					next();
+				}
+			}
 		} else {
 			this._transform = function(chunk, encoding, next) {
-				this.process(chunk, encoding, next, this.stream);
+				this.process(chunk, encoding, next, {
+					actual : this,
+					push: this.push.bind(this),
+					err: this.err.bind(this),
+					request: this.request,
+					response: this.response
+				});
 			};
+			this._flush = function(next) {
+				if (this.ending) {
+					this.ending(next, {
+						actual : this,
+						push: this.push.bind(this),
+						err: this.err.bind(this),
+						request: this.request,
+						response: this.response
+					});
+				} else {
+					next();
+				}
+			}
 		}
 	},
-
+	
 	err: function(error) {
-
+		
 		this.errors.write(error);
 	}
 });
