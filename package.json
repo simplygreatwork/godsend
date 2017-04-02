@@ -1,6 +1,6 @@
 {
   "name": "godsend",
-  "description": "Godsend: simple and elegant message streaming for microservices.",
+  "description": "Simple and eloquent message streaming for microservices.",
   "author": "Philip Weaver",
   "contributors": [],
   "version": "0.3.14",
