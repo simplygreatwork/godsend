@@ -1,11 +1,11 @@
 ![Godsend Logo](https://s3-us-west-2.amazonaws.com/notion-static/a7b5b59c35b2480e90126eadd33cf81f/godsend.png "Godsend Logo")
 
 # Godsend
-A simple workflow for streaming messages to micro-services.
+A simple and eloquent workflow for streaming messages to micro-services.
 
 [![Join the chat at https://gitter.im/godsendbus/Lobby](https://badges.gitter.im/godsendbus/Lobby.svg)](https://gitter.im/god-send/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
-An important goal for Godsend is to ease your software development workflow without tedium. For example, quickly save data to any undefined collection during the development process. Go back later to add validation for a collection as a message pattern processor on the bus in any order from anywhere in your application at any time. Then, add a data transformation processor from some other location in your project. Multiple message pattern processors are able to manage and filter the same request stream — yet decoupled. Composed, not chained.
+An important goal for Godsend is to ease your software development workflow without tedium. For example, quickly save data to any undefined collection during the development process. Go back later to add validation for a collection as a message pattern processor on the bus in any order from anywhere in your application at any time. Then, add a data transformation processor from some other location in your project. Multiple message pattern processors are able to manage and filter the same request stream — yet decoupled. This lets you compose and pipe streams *dynamically* at runtime.
 
 Set the broker's exchange into learning mode. Continue to develop your application. Then, when you're ready to publish, do a quick authorization review, then publish using the secure broker exchange. Since user authorization is based on message patterns, access to undefined collections becomes prohibited and access to resources for unauthorized users also gets locked down. Versioning of message pattern processors is based on the exchange's configuration of the user sending the request — not the content of that sent message pattern.
 
@@ -21,6 +21,10 @@ Set the broker's exchange into learning mode. Continue to develop your applicati
 - Few assumptions
    - Universal/isomorphic (in the browser and in Node.js)
    - The messaging scheme is totally open and configurable per processor and is not necessary predetermined to use wildcards or regular expressions for pattern matching. But you can. The default and intended scheme is to match multiple property/value pairs within an object.
+
+### Support
+
+If you encounter any issues installing, starting, or using Godsend, please email simplygreatwork@gmail.com. I would greatly appreciate it. 
 
 ### Online Examples
 
