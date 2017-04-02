@@ -4,14 +4,14 @@ var Class = require('./Class');
 var Utility = require('./Utility');
 
 Register = module.exports = Class.extend({
-
+	
 	initialize: function(properties) {
-
+		
 		Object.assign(this, properties);
 		this.processors = [];
 		this.cache = {};
 	},
-
+	
 	addProcessor: function(processor) {
 
 		this.ensureProcessor(processor);
