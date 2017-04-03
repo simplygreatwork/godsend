@@ -3,6 +3,7 @@ var Logger = require('js-logger');
 var Bus = require('./Bus');
 var User = require('./User');
 var Utility = require('./Utility');
+var assert = require('./Assertions');
 
 var Open = Class.extend({
 	
@@ -112,6 +113,7 @@ var Secure = Open.extend({
 		this.users = this.users || require('./users.json');
 		if (this.users) {
 			this.users = JSON.parse(JSON.stringify(this.users));
+			assert.users(this.users);
 			Object.keys(this.users).forEach(function(key) {
 				this.users[key] = new User(this.users[key]);
 			}.bind(this));
@@ -121,14 +123,13 @@ var Secure = Open.extend({
 	},
 	
 	connect: function(callback) { // authentication data will come from over the bus
-
-		this.bus = new Bus({
+		
+		new Bus({
 			address: this.broker.address
-		});
-		this.bus.connect({
+		}).connect({
 			credentials: {
-				username: 'broker',
-				passphrase: 'passphrase-to-hash'
+				username: this.users['broker'].credentials.username,
+				passphrase: this.users['broker'].credentials.passphrase
 			},
 			initialized : function(connection) {
 				this.process(connection);
@@ -308,6 +309,7 @@ var Learning = Secure.extend({
 		this.users = this.users || require('./users.json');
 		if (this.users) {
 			this.users = JSON.parse(JSON.stringify(this.users));
+			assert.users(this.users);
 			Object.keys(this.users).forEach(function(key) {
 				this.users[key] = new User(this.users[key]);
 			}.bind(this));
@@ -350,7 +352,7 @@ var Learning = Secure.extend({
 	
 	learn: function(type, request, user, callback) {
 		
-		if (!Utility.matchesProperties(request.pattern, {
+		if (!Utility.matchesProperties(request.pattern, {						// cyclical issue
 				topic: 'authentication',
 				action: 'put-user'
 		})) {
