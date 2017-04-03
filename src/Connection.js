@@ -8,6 +8,7 @@ var Cache = require('./Cache');
 var Process = require('./Process');
 var Request = require('./Request');
 var Response = require('./Response');
+var assert = require('./Assertions');
 
 Connection = module.exports = Class.extend({
 
@@ -45,6 +46,7 @@ Connection = module.exports = Class.extend({
 
 	send: function(properties) {
 		
+		assert.sending(properties);
 		var result = {
 			objects: [],
 			errors: []
@@ -86,6 +88,9 @@ Connection = module.exports = Class.extend({
 	
 	receive: function(request, streams) {
 		
+		this.getProcess(request, streams, function(process) {
+			streams.main.process = process;
+		}.bind(this));
 		streams.main.on('end', function() {
 			streams.main.process.end();
 		}.bind(this));
@@ -94,9 +99,6 @@ Connection = module.exports = Class.extend({
 			if (value) {
 				streams.main.process.write(value);
 			}
-		}.bind(this));
-		this.getProcess(request, streams, function(process) {
-			streams.main.process = process;
 		}.bind(this));
 	},
 	
@@ -116,7 +118,7 @@ Connection = module.exports = Class.extend({
 			callback(process);
 		});
 	},
-
+	
 	process: function(processor) {
 			
 		this.register.addProcessor(processor);
