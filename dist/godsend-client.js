@@ -16889,23 +16889,72 @@ function v4(options, buf, offset) {
 module.exports = v4;
 
 },{"./lib/bytesToUuid":115,"./lib/rng":116}],118:[function(require,module,exports){
-var io = require('socket.io-client');
-var ss = require('socket.io-stream');
 var assert = require('proclaim');
+var Logger = require('js-logger');
+
+Assertions = module.exports = {
+	
+	connecting: function(properties) {
+		
+		try {
+			assert.ok(properties.credentials, 'The credentials are missing from the connection request.');
+			assert.ok(properties.credentials.username, 'The username is missing from the connection request.');
+			assert.ok(properties.credentials.passphrase, 'The passphrase is missing from the connection request.');
+		} catch (e) {
+			throw e;
+		}
+	},
+	
+	sending : function(properties) {
+		
+		try {
+			assert.ok(properties.pattern, 'The send request must contain a pattern object.');
+			assert.notOk(properties.received, 'The name of the receiving function is "receive" and not "received".');
+			assert.ok(properties.data || properties.write, 'The send request must contain a data object or write function.');
+			assert.ok(properties.read || properties.receive, 'The send request must contain a read function or receive function.');
+		} catch (e) {
+			throw e;
+		}
+	},
+	
+	users : function(users) {
+		
+		Object.keys(users).forEach(function(key) {
+			Assertions.user(users[key]);
+		});
+	},
+	
+	user : function(user) {
+		
+		try {
+			assert.ok(user.credentials, 'A user is missing credentials.');
+			assert.ok(user.credentials.username, 'A user is missing a username.');
+			assert.ok(user.credentials.passphrase, 'A user "' + user.credentials.username + '" is missing a passphrase.');
+			assert.ok(user.patterns, 'A user "' + user.credentials.username + '" is missing patterns.');
+			assert.ok(user.patterns.sendable, 'A user "' + user.credentials.username + '" is missing sendable patterns.');
+			assert.ok(user.patterns.receivable, 'A user "' + user.credentials.username + '" is missing receivable patterns.');
+		} catch (e) {
+			throw e;
+		}
+	}
+};
+
+},{"js-logger":30,"proclaim":31}],119:[function(require,module,exports){
 var Class = require('./Class');
 var Connection = require('./Connection');
+var assert = require('./Assertions');
 
 Bus = module.exports = Class.extend({
-
+	
 	initialize: function(properties) {
-
+		
 		Object.assign(this, properties);
 		this.connections = [];
 	},
-
+	
 	connect: function(properties) {
 		
-		//godsend.assert.credentials(properties.credentials);
+		assert.connecting(properties);
 		var connection = new Connection({
 			address: this.address,
 			secure: this.secure,
@@ -16942,7 +16991,7 @@ Bus = module.exports = Class.extend({
 	}
 });
 
-},{"./Class":120,"./Connection":121,"proclaim":31,"socket.io-client":56,"socket.io-stream":103}],119:[function(require,module,exports){
+},{"./Assertions":118,"./Class":121,"./Connection":122}],120:[function(require,module,exports){
 Cache = module.exports = Class.extend({
 
 	initialize: function(properties) {
@@ -16969,7 +17018,7 @@ Cache = module.exports = Class.extend({
 	}
 });
 
-},{}],120:[function(require,module,exports){
+},{}],121:[function(require,module,exports){
 Class = module.exports = {
 	
 	extend: function(properties) {
@@ -17000,7 +17049,7 @@ Class = module.exports = {
 	}
 };
 
-},{}],121:[function(require,module,exports){
+},{}],122:[function(require,module,exports){
 var io = require('socket.io-client');
 var ss = require('socket.io-stream');
 var Class = require('./Class');
@@ -17011,6 +17060,7 @@ var Cache = require('./Cache');
 var Process = require('./Process');
 var Request = require('./Request');
 var Response = require('./Response');
+var assert = require('./Assertions');
 
 Connection = module.exports = Class.extend({
 
@@ -17048,6 +17098,7 @@ Connection = module.exports = Class.extend({
 
 	send: function(properties) {
 		
+		assert.sending(properties);
 		var result = {
 			objects: [],
 			errors: []
@@ -17089,6 +17140,9 @@ Connection = module.exports = Class.extend({
 	
 	receive: function(request, streams) {
 		
+		this.getProcess(request, streams, function(process) {
+			streams.main.process = process;
+		}.bind(this));
 		streams.main.on('end', function() {
 			streams.main.process.end();
 		}.bind(this));
@@ -17097,9 +17151,6 @@ Connection = module.exports = Class.extend({
 			if (value) {
 				streams.main.process.write(value);
 			}
-		}.bind(this));
-		this.getProcess(request, streams, function(process) {
-			streams.main.process = process;
 		}.bind(this));
 	},
 	
@@ -17119,14 +17170,14 @@ Connection = module.exports = Class.extend({
 			callback(process);
 		});
 	},
-
+	
 	process: function(processor) {
 			
 		this.register.addProcessor(processor);
 	}
 });
 
-},{"./Cache":119,"./Class":120,"./Process":122,"./Register":124,"./Request":125,"./Response":126,"./Stream":127,"./Transport":128,"socket.io-client":56,"socket.io-stream":103}],122:[function(require,module,exports){
+},{"./Assertions":118,"./Cache":120,"./Class":121,"./Process":123,"./Register":125,"./Request":126,"./Response":127,"./Stream":128,"./Transport":129,"socket.io-client":56,"socket.io-stream":103}],123:[function(require,module,exports){
 var Class = require('./Class');
 var Processor = require('./Processor');
 
@@ -17177,7 +17228,7 @@ Process = module.exports = Class.extend({
 	}
 });
 
-},{"./Class":120,"./Processor":123}],123:[function(require,module,exports){
+},{"./Class":121,"./Processor":124}],124:[function(require,module,exports){
 var Transform = require('stream').Transform || require('readable-stream').Transform;
 var util = require('util');
 
@@ -17261,7 +17312,7 @@ Object.assign(Processor.prototype, {
 
 module.exports = Processor;
 
-},{"readable-stream":55,"stream":25,"util":29}],124:[function(require,module,exports){
+},{"readable-stream":55,"stream":25,"util":29}],125:[function(require,module,exports){
 (function (process){
 var toposort = require('toposort');
 var uuid = require('uuid/v4');
@@ -17434,7 +17485,7 @@ Register = module.exports = Class.extend({
 });
 
 }).call(this,require('_process'))
-},{"./Class":120,"./Utility":129,"_process":8,"toposort":114,"uuid/v4":117}],125:[function(require,module,exports){
+},{"./Class":121,"./Utility":130,"_process":8,"toposort":114,"uuid/v4":117}],126:[function(require,module,exports){
 var Class = require('./Class');
 var Utility = require('./Utility');
 
@@ -17493,7 +17544,7 @@ Request = module.exports = Class.extend({
 	}
 });
 
-},{"./Class":120,"./Utility":129}],126:[function(require,module,exports){
+},{"./Class":121,"./Utility":130}],127:[function(require,module,exports){
 var Class = require('./Class');
 
 Response = module.exports = Class.extend({
@@ -17504,7 +17555,7 @@ Response = module.exports = Class.extend({
 	}
 });
 
-},{"./Class":120}],127:[function(require,module,exports){
+},{"./Class":121}],128:[function(require,module,exports){
 var Class = require('./Class');
 var io = require('socket.io-client');
 var ss = require('socket.io-stream');
@@ -17547,7 +17598,7 @@ Stream = module.exports = Class.extend({
 	}
 });
 
-},{"./Class":120,"socket.io-client":56,"socket.io-stream":103}],128:[function(require,module,exports){
+},{"./Class":121,"socket.io-client":56,"socket.io-stream":103}],129:[function(require,module,exports){
 var io = require('socket.io-client');
 var ss = require('socket.io-stream');
 var Logger = require('js-logger');
@@ -17592,9 +17643,9 @@ Transport = module.exports = Class.extend({
 			this.receive(request, stream);
 		}.bind(this));
 	},
-
+	
 	disconnect: function(callback) {
-
+		
 		console.log('Transport.disconnect');
 		callback();
 	},
@@ -17615,7 +17666,7 @@ Transport = module.exports = Class.extend({
 	}
 });
 
-},{"js-logger":30,"socket.io-client":56,"socket.io-stream":103}],129:[function(require,module,exports){
+},{"js-logger":30,"socket.io-client":56,"socket.io-stream":103}],130:[function(require,module,exports){
 Utility = module.exports = {
 
 	digest: function(string) {
@@ -17699,7 +17750,7 @@ Utility = module.exports = {
 	}
 };
 
-},{}],130:[function(require,module,exports){
+},{}],131:[function(require,module,exports){
 
 module.exports = {
 	Bus : require('./Bus'),
@@ -17708,5 +17759,5 @@ module.exports = {
 	uuid : require('uuid/v4')
 };
 
-},{"./Bus":118,"./Class":120,"uuid/v4":117}]},{},[130])(130)
+},{"./Bus":119,"./Class":121,"uuid/v4":117}]},{},[131])(131)
 });
