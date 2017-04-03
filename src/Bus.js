@@ -1,20 +1,18 @@
-var io = require('socket.io-client');
-var ss = require('socket.io-stream');
-var assert = require('proclaim');
 var Class = require('./Class');
 var Connection = require('./Connection');
+var assert = require('./Assertions');
 
 Bus = module.exports = Class.extend({
-
+	
 	initialize: function(properties) {
-
+		
 		Object.assign(this, properties);
 		this.connections = [];
 	},
-
+	
 	connect: function(properties) {
 		
-		//godsend.assert.credentials(properties.credentials);
+		assert.connecting(properties);
 		var connection = new Connection({
 			address: this.address,
 			secure: this.secure,
