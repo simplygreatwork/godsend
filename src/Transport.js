@@ -42,9 +42,9 @@ Transport = module.exports = Class.extend({
 			this.receive(request, stream);
 		}.bind(this));
 	},
-
+	
 	disconnect: function(callback) {
-
+		
 		console.log('Transport.disconnect');
 		callback();
 	},
