@@ -7,10 +7,9 @@ Broker = module.exports = Class.extend({
 		Object.assign(this, properties);
 		this.exchange.broker = this;
 	},
-
+	
 	start: function(callback) {
-
-		console.log('Server.start');
+		
 		this.connections = [];
 		var io = require('socket.io').listen(this.server);
 		io.on('connection', function(socket) {
@@ -37,7 +36,7 @@ Broker = module.exports = Class.extend({
 		});
 		callback();
 	},
-
+	
 	send: function(request, stream, socket) {
 
 		if (this.secure) {
