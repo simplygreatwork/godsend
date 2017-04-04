@@ -3,7 +3,7 @@
   "description": "Simple and eloquent message streaming for microservices.",
   "author": "Philip Weaver",
   "contributors": [],
-  "version": "0.3.15",
+  "version": "0.3.16",
   "main": "./src/main-node.js",
   "scripts": {
     "start": "node tests/main.js"
