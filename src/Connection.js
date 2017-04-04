@@ -90,15 +90,15 @@ Connection = module.exports = Class.extend({
 		
 		this.getProcess(request, streams, function(process) {
 			streams.main.process = process;
-		}.bind(this));
-		streams.main.on('end', function() {
-			streams.main.process.end();
-		}.bind(this));
-		streams.main.on('readable', function() {
-			var value = streams.main.read();
-			if (value) {
-				streams.main.process.write(value);
-			}
+			streams.main.on('end', function() {
+				streams.main.process.end();
+			}.bind(this));
+			streams.main.on('readable', function() {
+				var value = streams.main.read();
+				if (value) {
+					streams.main.process.write(value);
+				}
+			}.bind(this));
 		}.bind(this));
 	},
 	
