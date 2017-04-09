@@ -44,9 +44,9 @@ PORT=8082 node example.js
 
 ```javascript
 new basic.Server({
-	exchange : new godsend.Exchange.Open()
+  exchange : new godsend.Exchange.Open()
 }).start(function() {
-	console.log('The server has started.');
+  console.log('The server has started.');
 }.bind(this));
 ```
 
@@ -57,14 +57,14 @@ new basic.Server({
 
 ```javascript
 new basic.Server({
-	address : 'http://127.0.0.1:8080/',
+  address : 'http://127.0.0.1:8080/',
 }).start(function() {
-	new basic.Authorizer({
-		address: 'http://127.0.0.1:8080/',
-		users: this.users
-	}).connect(function() {
-		console.log('The server has started.');
-	}.bind(this));
+  new basic.Authorizer({
+    address: 'http://127.0.0.1:8080/',
+    users: this.users
+  }).connect(function() {
+    console.log('The server has started.');
+  }.bind(this));
 }.bind(this));
 ```
 
@@ -72,19 +72,19 @@ new basic.Server({
 
 ```javascript
 new godsend.Bus({
-	address : 'http://127.0.0.1:8080/',
+  address : 'http://127.0.0.1:8080/',
 }).connect({
-	initialized : function(connection) {
-		// this.process(connection);
-		// add message processors to the connection here;
-	}.bind(this),
-	connected: function(connection) {
-		callback();
-	}.bind(this),
-	errored : function(errors) {
-		console.error('connection errors: ' + errors);
-		callback(errors);
-	}.bind(this)
+  initialized : function(connection) {
+    // this.process(connection);
+    // add message processors to the connection here;
+  }.bind(this),
+  connected: function(connection) {
+    callback();
+  }.bind(this),
+  errored : function(errors) {
+    console.error('connection errors: ' + errors);
+    callback(errors);
+  }.bind(this)
 });
 ```
 
@@ -100,23 +100,23 @@ new godsend.Bus({
 
 ```javascript
 new godsend.Bus({
-	address : 'http://127.0.0.1:8080/',
+  address : 'http://127.0.0.1:8080/',
 }).connect({
-	credentials: {
-		username: 'username',
-		passphrase: 'passphrase',
-	},
-	initialized : function(connection) {
-		this.process(connection);
-	}.bind(this),
-	connected: function(connection) {
-		this.connection = connection;
-		callback();
-	}.bind(this),
-	errored : function(errors) {
-		console.error('connection errors: ' + errors);
-		callback(errors);
-	}.bind(this)
+  credentials: {
+    username: 'username',
+    passphrase: 'passphrase',
+  },
+  initialized : function(connection) {
+    this.process(connection);
+  }.bind(this),
+  connected: function(connection) {
+    this.connection = connection;
+    callback();
+  }.bind(this),
+  errored : function(errors) {
+    console.error('connection errors: ' + errors);
+    callback(errors);
+  }.bind(this)
 });
 ```
 
@@ -129,15 +129,15 @@ new godsend.Bus({
 
 ```javascript
 connection.send({
-	pattern: {
-		action: 'message'
-	},
-	data : {
-		message : 'hello'
-	},
-	receive: function(result) {
-		console.log('result: ' + JSON.stringify(result, null, 2));
-	}.bind(this)
+  pattern: {
+    action: 'message'
+  },
+  data : {
+    message : 'hello'
+  },
+  receive: function(result) {
+    console.log('result: ' + JSON.stringify(result, null, 2));
+  }.bind(this)
 });
 ```
 
@@ -152,27 +152,27 @@ connection.send({
 
 ```javascript
 connection.send({
-	pattern: {
-		action: 'message'
-	},
-	write: function(stream) {
-		stream.write({
-			message: 'hello'
-		});
-		stream.write({
-			message: 'world'
-		});
-		stream.end();
-	}.bind(this),
-	read: function(object) {
-		console.log('read an response object: ' + JSON.stringify(object, null, 2));
-	},
-	error: function(error) {
-		console.log('read an response error: ' + JSON.stringify(error, null, 2));
-	},
-	receive : function(result) {
-		console.log('The request has finished');
-	}
+  pattern: {
+    action: 'message'
+  },
+  write: function(stream) {
+    stream.write({
+      message: 'hello'
+    });
+    stream.write({
+      message: 'world'
+    });
+    stream.end();
+  }.bind(this),
+  read: function(object) {
+    console.log('read an response object: ' + JSON.stringify(object, null, 2));
+  },
+  error: function(error) {
+    console.log('read an response error: ' + JSON.stringify(error, null, 2));
+  },
+  receive : function(result) {
+    console.log('The request has finished');
+  }
 });
 ```
 
@@ -190,18 +190,18 @@ connection.send({
 
 ```javascript
 connection.process({
-	id: 'message',
-	on: function(request) {
-		request.accept({
-			action: 'message'
-		});
-	}.bind(this),
-	run: function(stream) {
-		stream.push({
-			reply : 'You said: ' + stream.object.message
-		});
-		stream.next();
-	}.bind(this)
+  id: 'message',
+  on: function(request) {
+    request.accept({
+      action: 'message'
+    });
+  }.bind(this),
+  run: function(stream) {
+    stream.push({
+      reply : 'You said: ' + stream.object.message
+    });
+    stream.next();
+  }.bind(this)
 });
 ```
 
@@ -212,18 +212,18 @@ connection.process({
 
 ```javascript
 connection.process({
-	id: 'message-after',
-	after : 'message'
-	on: function(request) {
-		request.accept({
-			action: 'message'
-		});
-	}.bind(this),
-	run: function(stream) {
-		console.log('Logging the message: ' + JSON.stringify(stream.object, null, 2));
-		stream.push(stream.object);
-		stream.next();
-	}.bind(this)
+  id: 'message-after',
+  after : 'message'
+  on: function(request) {
+    request.accept({
+      action: 'message'
+    });
+  }.bind(this),
+  run: function(stream) {
+    console.log('Logging the message: ' + JSON.stringify(stream.object, null, 2));
+    stream.push(stream.object);
+    stream.next();
+  }.bind(this)
 });
 ```
 
@@ -233,20 +233,20 @@ You can describe request matching explicitly:
 
 ```javascript
 connection.process({
-	id: 'message',
-	on: function(request) {
-		if (request.matches({
-			action : 'message'
-		})) {
-			request.accept();
-		} else {
-			request.skip();
-		}
-	}.bind(this),
-	run: function(stream) {
-		stream.push(stream.object);
-		stream.next();
-	}.bind(this)
+  id: 'message',
+  on: function(request) {
+    if (request.matches({
+      action : 'message'
+    })) {
+      request.accept();
+    } else {
+      request.skip();
+    }
+  }.bind(this),
+  run: function(stream) {
+    stream.push(stream.object);
+    stream.next();
+  }.bind(this)
 });
 ```
 
@@ -254,18 +254,18 @@ Or you can implement request matching logic yourself if you need to:
 
 ```javascript
 connection.process({
-	id: 'message',
-	on: function(request) {
-		if (matches) {
-			request.accept();
-		} else {
-			request.skip();
-		}
-	}.bind(this),
-	run: function(stream) {
-		stream.push(stream.object);
-		stream.next();
-	}.bind(this)
+  id: 'message',
+  on: function(request) {
+    if (matches) {
+      request.accept();
+    } else {
+      request.skip();
+    }
+  }.bind(this),
+  run: function(stream) {
+    stream.push(stream.object);
+    stream.next();
+  }.bind(this)
 });
 ```
 
