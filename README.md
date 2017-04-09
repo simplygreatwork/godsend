@@ -50,10 +50,11 @@ new basic.Server({
 }.bind(this));
 ```
 
-### Starting the server securely (preferred)
+### Starting the server with authorization (preferred)
 
-- The method requires that a the authorizer is provided and provides basic users.
-- Refer to the godsend-examples for many examples with authorization.
+- This method requires that the server is provided with basic initial users to allow the authorizer and the broker to communicate on the bus.
+- In the examples, the initial users "broker" and "authorizer" are supplied to the secure exchange from godsend-basics/src/users.json. But you can also customize these users and pass them into your own instance of the server manually.
+- Also refer to godsend-examples for many more examples which use authorization.
 
 ```javascript
 new basic.Server({
@@ -76,7 +77,7 @@ new godsend.Bus({
 }).connect({
   initialized : function(connection) {
     // this.process(connection);
-    // add message processors to the connection here;
+    // add message processors to the connection here
   }.bind(this),
   connected: function(connection) {
     callback();
@@ -171,7 +172,7 @@ connection.send({
     console.log('read an response error: ' + JSON.stringify(error, null, 2));
   },
   receive : function(result) {
-    console.log('The request has finished');
+    console.log('The request has finished.');
   }
 });
 ```
@@ -268,7 +269,6 @@ connection.process({
   }.bind(this)
 });
 ```
-
 
 ### Support
 
