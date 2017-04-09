@@ -16897,9 +16897,10 @@ Assertions = module.exports = {
 	connecting: function(properties) {
 		
 		try {
-			assert.ok(properties.credentials, 'The credentials are missing from the connection request.');
-			assert.ok(properties.credentials.username, 'The username is missing from the connection request.');
-			assert.ok(properties.credentials.passphrase, 'The passphrase is missing from the connection request.');
+			if (properties.credentials) {
+				assert.ok(properties.credentials.username, 'The username is missing from the connection request.');
+				assert.ok(properties.credentials.passphrase, 'The passphrase is missing from the connection request.');
+			}
 		} catch (e) {
 			throw e;
 		}
