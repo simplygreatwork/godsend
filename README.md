@@ -7,7 +7,9 @@ A simple and eloquent workflow for streaming messages to micro-services.
 
 An important goal for Godsend is to ease your software development workflow without tedium. For example, quickly save data to any undefined collection during the development process. Go back later to add validation for a collection as a message pattern processor on the bus in any order from anywhere in your application at any time. Then, add a data transformation processor from some other location in your project. Multiple message pattern processors are able to manage and filter the same request stream — yet decoupled. This lets you compose and pipe streams *dynamically* at runtime.
 
-Set the broker's exchange into learning mode. Continue to develop your application. Then, when you're ready to publish, do a quick authorization review, then publish using the secure broker exchange. Since user authorization is based on message patterns, access to undefined collections becomes prohibited and access to resources for unauthorized users also gets locked down. Versioning of message pattern processors is based on the exchange's configuration of the user sending the request — not the content of that sent message pattern.
+Set the broker's exchange into learning mode. Continue to develop your application. Then, when you're ready to publish, do a quick authorization review, then publish using the secure broker exchange. Since user authorization is based on message patterns, access to undefined collections becomes prohibited and access to resources for unauthorized users also gets locked down.
+
+Versioning of message pattern processors is based on the exchange's configuration of the user sending the request — not the content of that sent message pattern.
 
 ### Key Features
 
@@ -71,20 +73,24 @@ new basic.Server({
 
 ### Connecting to the bus without authorization
 
+- Create the bus and supply the address with which to connect.
+- "initialized" is called to allow you to register processors; e.g. connection.process({...})
+- "connected" is called after the connection to the bus was successfully established.
+- "errored" is called if a connection to the bus could not be established.
+
+
 ```javascript
 new godsend.Bus({
   address : 'http://127.0.0.1:8080/',
 }).connect({
   initialized : function(connection) {
-    // this.process(connection);
-    // add message processors to the connection here
+    console.log('We\'re not yet connected to the bus. But this is a good time to add processors to the connection.');
   }.bind(this),
   connected: function(connection) {
-    callback();
+    console.log('We\'re now connected to the bus. Send some messages now.');
   }.bind(this),
   errored : function(errors) {
-    console.error('connection errors: ' + errors);
-    callback(errors);
+    console.log('An error has occured connecting to the bus: ' + JSON.stringify(errors, null, 2));
   }.bind(this)
 });
 ```
@@ -108,15 +114,13 @@ new godsend.Bus({
     passphrase: 'passphrase',
   },
   initialized : function(connection) {
-    this.process(connection);
+    console.log('We\'re not yet connected to the bus. But this is a good time to add processors to the connection.');
   }.bind(this),
   connected: function(connection) {
-    this.connection = connection;
-    callback();
+    console.log('We\'re now connected to the bus. Send some messages now.');
   }.bind(this),
   errored : function(errors) {
-    console.error('connection errors: ' + errors);
-    callback(errors);
+    console.log('An error has occured connecting to the bus: ' + JSON.stringify(errors, null, 2));
   }.bind(this)
 });
 ```
@@ -137,7 +141,9 @@ connection.send({
     message : 'hello'
   },
   receive: function(result) {
-    console.log('result: ' + JSON.stringify(result, null, 2));
+    console.log('The request has finished.');
+    console.log('result.objects: ' + JSON.stringify(result.objects, null, 2));
+    console.log('result.errors: ' + JSON.stringify(result.errors, null, 2));
   }.bind(this)
 });
 ```
@@ -173,6 +179,8 @@ connection.send({
   },
   receive : function(result) {
     console.log('The request has finished.');
+    console.log('result.objects: ' + JSON.stringify(result.objects, null, 2));
+    console.log('result.errors: ' + JSON.stringify(result.errors, null, 2));
   }
 });
 ```
@@ -180,13 +188,13 @@ connection.send({
 ### Processing sent messages
 
 - You typically process messages using a connection in Node.js and not in the browser. (an exception is reacting to messages sent from the server)
-- "id" can be used to name a processor to later run a separate processor "before" or "after".
+- "id" can be used to name a processor to run a separate processor "before" or "after".
 - "id" can also be used to group multiple versions of the same processor.
 - "on" is called first to determine whether the processor ought to indeed process the request.
-- Invoke request.accept({...}), request.skip, and/or request.matches to indicate a match.
+- Invoke request.accept({...}), request.skip, and/or request.matches({...}) to indicate a match.
 - "run" is invoked upon each object processed by the stream.
 - Stream.object is the current value.
-- Call stream.push to proceed with the same value, a different value entirely, or even omit the call to stream.push.
+- Call stream.push to proceed with the same value, different values entirely, or even omit the call to stream.push.
 - Call stream.next to continue with the next processor.
 
 ```javascript
@@ -209,7 +217,7 @@ connection.process({
 ### Processing a sent message after another processor
 
 - In this example, processor "message-after" will execute after "message".
-- When you use multiple processors for a single request, the accepted patterns do not have to match exactly.
+- When you use multiple processors for the same request, the accepted patterns do not have to match exactly.
 
 ```javascript
 connection.process({
@@ -226,6 +234,41 @@ connection.process({
     stream.next();
   }.bind(this)
 });
+```
+
+### Processing a sent message using processor weights
+
+- You can add processors in order by weight.
+- Negative weights are early.
+- Positive weights are late.
+
+```javascript
+connection.process({
+  id: 'pre-process',
+  weight : -100
+  on: function(request) {
+    request.accept();
+  }.bind(this),
+  run: function(stream) {
+    console.log('Pre-processing pattern: ' + JSON.stringify(stream.request.pattern, null, 2));
+    stream.push(stream.object);
+    stream.next();
+  }.bind(this)
+});
+
+connection.process({
+  id: 'post-process',
+  weight : 100
+  on: function(request) {
+    request.accept();
+  }.bind(this),
+  run: function(stream) {
+    console.log('Post-processing pattern: ' + JSON.stringify(stream.request.pattern, null, 2));
+    stream.push(stream.object);
+    stream.next();
+  }.bind(this)
+});
+
 ```
 
 ### Advanced processor request matching
@@ -269,6 +312,40 @@ connection.process({
   }.bind(this)
 });
 ```
+
+### Declaring multiple versions of a processor
+
+- Processor versions are substituted based upon any versions defined within a user's profile.
+
+```javascript
+connection.process({
+	id: 'a-processor',
+	version: {
+		name: 'version-two',
+		'default': true
+	},
+	on: function(request) {
+		request.accept({
+			topic: 'store',
+			action: 'get'
+		});
+	}.bind(this),
+	run: function(stream) {
+		console.log('Getting data from the store. (v2 : default)');
+		stream.push(stream.object);
+		stream.next();
+	}.bind(this)
+});
+```
+
+### Understand streaming in Godsend
+
+- Suppose, first, that if you write objects to the bus, that these exact same objects get returned to the sender (echoed).
+- Next, imagine the scenario that these objects are transformed (modified) before they get returned to the sender.
+- Imagine, instead, the scenario that each object gets stored, is *not* returned, and a single aggregate response object is created and returned.
+- The inverse of this is also possible: you send one object (a query, for example) and multiple objects get returned as a result.
+- In summary, you use processors in Godsend to *transform* a request to become the response: many to many, one to one, one to many, or many to one.
+- A request in Godsend can have many processors to working together to process the same request data. Fundamentally, this is why a single transformation stream is used to transform a request into a response.
 
 ### Support
 
