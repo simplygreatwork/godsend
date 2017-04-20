@@ -46,5 +46,6 @@ Bus = module.exports = Class.extend({
 				});
 			}
 		}.bind(this));
+		return connection;
 	}
 });
