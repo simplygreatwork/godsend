@@ -7,8 +7,9 @@ Transport = module.exports = Class.extend({
 	initialize: function(properties) {
 
 		Object.assign(this, properties);
+		this.connected = false;
 	},
-
+	
 	connect: function(callback) {
 		
 		this.socket = io.connect(this.address, {
@@ -25,12 +26,14 @@ Transport = module.exports = Class.extend({
 						Logger.get('transport').log('Connected to the broker as "' + username + '".');
 					}
 					callback(result);
+					this.connected = true;
 				}.bind(this));
 			} else {
 				Logger.get('transport').log('Connected to the broker.');
 				callback({
 					errors: []
 				});
+				this.connected = true;
 			}
 		}.bind(this));
 		this.socket.on('connect_error', function(error) {
