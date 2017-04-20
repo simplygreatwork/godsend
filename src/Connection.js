@@ -11,26 +11,27 @@ var Response = require('./Response');
 var assert = require('./Assertions');
 
 Connection = module.exports = Class.extend({
-
+	
 	initialize: function(properties) {
-
+		
 		Object.assign(this, properties);
 		this.register = new Register();
 		this.cache = new Cache();
 		this.initializeTransport();
+		this.initializeSendables();
 	},
-
-	initializeTransport: function() {
-
+	
+	initializeTransport : function() {
+		
 		this.transport = new Transport({
 			connection: this,
 			address: this.address,
 			secure: this.secure,
 		});
 	},
-
+	
 	connect: function(callback) {
-
+		
 		this.transport.connect(callback);
 	},
 
@@ -40,13 +41,31 @@ Connection = module.exports = Class.extend({
 	},
 
 	write: function(pattern) {
-
+		
 		return this.transport.write(pattern);
 	},
-
-	send: function(properties) {
+	
+	initializeSendables : function() {
 		
-		assert.sending(properties);
+		this.sendables = [];
+		setInterval(function() {
+			if (this.transport.connected) {
+				if (this.sendables.length > 0) {
+					var sendable = this.sendables.shift();
+					this.sendNow(sendable);
+				}
+			}
+		}.bind(this), 100);
+	},
+	
+	send : function(sendable) {
+		
+		assert.sending(sendable);
+		this.sendables.push(sendable);
+	},
+	
+	sendNow: function(properties) {
+		
 		var result = {
 			objects: [],
 			errors: []
@@ -119,8 +138,25 @@ Connection = module.exports = Class.extend({
 		});
 	},
 	
-	process: function(processor) {
-			
+	mount: function(processor) {
+		
 		this.register.addProcessor(processor);
+	},
+	
+	unmount: function(processor) {
+		
+		var id = processor.id;
+		var version = processor.version;
+		this.register.removeProcessor(processor);
+	},
+	
+	process: function(processor) {
+		
+		this.mount(processor);	
+	},
+	
+	unprocess: function(processor) {
+		
+		this.unmount(processor);
 	}
 });
