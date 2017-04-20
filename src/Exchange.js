@@ -368,7 +368,7 @@ var Learning = Secure.extend({
 	},
 
 	save: function(user, callback) {
-	
+
 		this.connection.send({
 			pattern: {
 				topic: 'authentication',
