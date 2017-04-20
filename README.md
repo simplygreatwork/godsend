@@ -1,7 +1,7 @@
 ![Godsend Logo](https://s3-us-west-2.amazonaws.com/notion-static/a7b5b59c35b2480e90126eadd33cf81f/godsend.png "Godsend Logo")
 
 # Godsend
-A simple and eloquent workflow for streaming messages to micro-services.
+Separation of concerns for streaming micro-services.
 
 [![Join the chat at https://gitter.im/godsendbus/Lobby](https://badges.gitter.im/godsendbus/Lobby.svg)](https://gitter.im/god-send/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
@@ -14,7 +14,7 @@ Versioning of message pattern processors is based on the exchange's configuratio
 ### Key Features
 
 - Send messages to the bus as a stream and process messages as a stream.
-- Inject message processors to filter the stream from any location in your project to decouple concerns such as validation and transformation. (mutable composition)
+- Inject message processors to filter the stream from any location in your project to decouple concerns such as validation and transformation. (mutable composition for separation of concerns)
 - Multiple message processors are able to process, filter, and transform a particular message request in a controlled, composed order.
 - The secure messaging exchange learns authorization automatically (with exercise).
 - Message processors may be versioned according to the connected user. Processor versions are dynamically substituted in the processor list upon each user's request. The broker exchange, not the sender, determines the processor version from the sending user's configuration.
@@ -73,55 +73,27 @@ new basic.Server({
 
 ### Connecting to the bus without authorization
 
-- Create the bus and supply the address with which to connect.
-- "initialized" is called to allow you to register processors; e.g. connection.process({...})
-- "connected" is called after the connection to the bus was successfully established.
-- "errored" is called if a connection to the bus could not be established.
-
+- Invoke godsend.connect and supply the broker address.
+- Any subsequent calls to connection.send will queue until the connection is fully established.
 
 ```javascript
-new godsend.Bus({
-  address : 'http://127.0.0.1:8080/',
-}).connect({
-  initialized : function(connection) {
-    console.log('We\'re not yet connected to the bus. But this is a good time to add processors to the connection.');
-  }.bind(this),
-  connected: function(connection) {
-    console.log('We\'re now connected to the bus. Send some messages now.');
-  }.bind(this),
-  errored : function(errors) {
-    console.log('An error has occured connecting to the bus: ' + JSON.stringify(errors, null, 2));
-  }.bind(this)
+var connection = godsend.connect({
+  address: basic.Utility.local()
 });
 ```
 
 ### Connecting to the bus using authorization
 
-- Create the bus and supply the address with which to connect.
-- Connect to the bus by supplying credentials and any of several handlers (as follows).
-- The credentials should match credentials provided by the server's (the broker's) authorizer.
-- "initialized" is called to allow you to register processors; e.g. connection.process({...})
-- "connected" is called after the connection to the bus was successfully established.
-- "errored" is called if a connection to the bus could not be established.
-- Before connecting to an authorized bus, you must start the server/broker by supplying authorized users.
+- Invoke godsend.connect and supply the broker address and credentials.
+- Any subsequent calls to connection.send will queue until the connection is fully established.
 
 ```javascript
-new godsend.Bus({
+var connection = godsend.connect({
   address : 'http://127.0.0.1:8080/',
-}).connect({
   credentials: {
     username: 'username',
     passphrase: 'passphrase',
-  },
-  initialized : function(connection) {
-    console.log('We\'re not yet connected to the bus. But this is a good time to add processors to the connection.');
-  }.bind(this),
-  connected: function(connection) {
-    console.log('We\'re now connected to the bus. Send some messages now.');
-  }.bind(this),
-  errored : function(errors) {
-    console.log('An error has occured connecting to the bus: ' + JSON.stringify(errors, null, 2));
-  }.bind(this)
+  }
 });
 ```
 
