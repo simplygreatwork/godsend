@@ -1,6 +1,6 @@
 {
   "name": "godsend",
-  "description": "Simple and eloquent message streaming for microservices.",
+  "description": "Separation of concerns for streaming microservices.",
   "author": "Philip Weaver",
   "contributors": [],
   "version": "0.3.17",
