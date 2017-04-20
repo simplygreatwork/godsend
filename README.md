@@ -78,7 +78,7 @@ new basic.Server({
 
 ```javascript
 var connection = godsend.connect({
-  address: basic.Utility.local()
+  address : 'http://127.0.0.1:8080/'
 });
 ```
 
@@ -291,22 +291,22 @@ connection.process({
 
 ```javascript
 connection.process({
-	id: 'a-processor',
-	version: {
-		name: 'version-two',
-		'default': true
-	},
-	on: function(request) {
-		request.accept({
-			topic: 'store',
-			action: 'get'
-		});
-	}.bind(this),
-	run: function(stream) {
-		console.log('Getting data from the store. (v2 : default)');
-		stream.push(stream.object);
-		stream.next();
-	}.bind(this)
+  id: 'a-processor',
+  version: {
+    name: 'version-two',
+    'default': true
+  },
+  on: function(request) {
+    request.accept({
+      topic: 'store',
+      action: 'get'
+    });
+  }.bind(this),
+  run: function(stream) {
+    console.log('Getting data from the store. (v2 : default)');
+    stream.push(stream.object);
+    stream.next();
+  }.bind(this)
 });
 ```
 
