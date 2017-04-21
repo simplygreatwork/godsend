@@ -7,7 +7,6 @@ Bus = module.exports = Class.extend({
 	initialize: function(properties) {
 		
 		Object.assign(this, properties);
-		this.connections = [];
 	},
 	
 	connect: function(properties) {
@@ -26,24 +25,22 @@ Bus = module.exports = Class.extend({
 				connection.disconnect(function() {
 					connection = null;
 				});
-			} else {
-				this.connections.push(connection);
 			}
-			if (properties.connected) {
-				if (result.errors && result.errors.length === 0) {
+			if (result.errors && result.errors.length === 0) {
+				if (properties.connected) {
 					properties.connected(connection);
 				}
 			}
-			if (properties.errored) {
-				if (result.errors && result.errors.length > 0) {
+			if (result.errors && result.errors.length > 0) {
+				if (properties.errored) {
 					properties.errored(result.errors);
+				} else {
+					if (properties.credentials) {
+						console.error('Error connecting to the bus as "' + JSON.stringify(properties.credentials) + '".');
+					} else {
+						console.error('Error connecting to the bus.');
+					}
 				}
-			}
-			if (properties.responded) {
-				properties.responded({
-					connection: connection,
-					errors: result.errors
-				});
 			}
 		}.bind(this));
 		return connection;

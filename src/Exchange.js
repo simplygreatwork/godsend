@@ -19,10 +19,14 @@ var Open = Class.extend({
 	
 	exchange: function(request, stream, connection) {
 		
-		this.manage(stream);
-		this.broker.connections.forEach(function(connection) {
-			this.broadcast(request, stream, connection);
-		}.bind(this));
+		if (connection.credentials) {
+			this.manage(stream);
+			this.broker.connections.forEach(function(connection) {
+				this.broadcast(request, stream, connection);
+			}.bind(this));
+		} else {
+			console.error('Connection is missing valid credentials.');
+		}
 	},
 	
 	manage: function(stream) {
@@ -253,7 +257,7 @@ var Secure = Open.extend({
 	},
 
 	authenticate: function(credentials) {
-
+		
 		var result = false;
 		var user = this.users[credentials.username];
 		if (user) {
@@ -270,28 +274,32 @@ var Secure = Open.extend({
 	
 	exchange: function(request, stream, connection) {
 		
-		this.manage(stream);
-		var username = connection.credentials.username;
-		var user = this.users[username];
-		request.username = username;
-		request.versions = user.versions;
-		if (user && user.isSendable(request.pattern)) {
-			var sent = false;
-			this.broker.connections.forEach(function(each) {
-				if (each.credentials) {
-					user = this.users[each.credentials.username];
-					if (user.isReceivable(request.pattern)) {
-						sent = true;
-						this.broadcast(request, stream, each);
+		if (connection.credentials) {
+			this.manage(stream);
+			var username = connection.credentials.username;
+			var user = this.users[username];
+			request.username = username;
+			request.versions = user.versions;
+			if (user && user.isSendable(request.pattern)) {
+				var sent = false;
+				this.broker.connections.forEach(function(each) {
+					if (each.credentials) {
+						user = this.users[each.credentials.username];
+						if (user.isReceivable(request.pattern)) {
+							sent = true;
+							this.broadcast(request, stream, each);
+						}
 					}
+				}.bind(this));
+				if (!sent) {
+					stream.main.end();
+					stream.error.end();
 				}
-			}.bind(this));
-			if (!sent) {
-				stream.main.end();
-				stream.error.end();
+			} else {
+				this.err(stream, 'The sender "' + username + '" is not allowed to send the pattern: ' + JSON.stringify(request.pattern));
 			}
 		} else {
-			this.err(stream, 'The sender "' + username + '" is not allowed to send the pattern: ' + JSON.stringify(request.pattern));
+			console.error('Connection is missing valid credentials.');
 		}
 	}
 });
@@ -320,26 +328,30 @@ var Learning = Secure.extend({
 	
 	exchange: function(request, stream, connection) {
 		
-		this.manage(stream);
-		var username = connection.credentials.username;
-		var user = this.users[username];
-		request.username = username;
-		request.versions = user.versions;
-		this.learn('sendable', request, user);
-		if (user) {
-			var sent = false;
-			this.broker.connections.forEach(function(each) {
-				if (each.credentials) {
-					sent = true;
-					this.broadcast(request, stream, each);
+		if (connection.credentials) {
+			this.manage(stream);
+			var username = connection.credentials.username;
+			var user = this.users[username];
+			request.username = username;
+			request.versions = user.versions;
+			this.learn('sendable', request, user);
+			if (user) {
+				var sent = false;
+				this.broker.connections.forEach(function(each) {
+					if (each.credentials) {
+						sent = true;
+						this.broadcast(request, stream, each);
+					}
+				}.bind(this));
+				if (!sent) {
+					stream.main.end();
+					stream.error.end();
 				}
-			}.bind(this));
-			if (!sent) {
-				stream.main.end();
-				stream.error.end();
+			} else {
+				this.err(response, 'The sender "' + username + '" is not allowed to send the pattern: ' + JSON.stringify(request.pattern));
 			}
 		} else {
-			this.err(response, 'The sender "' + username + '" is not allowed to send the pattern: ' + JSON.stringify(request.pattern));
+			console.error('Connection is missing valid credentials.');
 		}
 	},
 	

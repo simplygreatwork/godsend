@@ -38,16 +38,8 @@ Broker = module.exports = Class.extend({
 	},
 	
 	send: function(request, stream, socket) {
-
-		if (this.secure) {
-			if (socket.credentials) {
-				this.exchange.exchange(request, stream, socket);
-			} else {
-				console.log('Connection is missing credentials.');
-			}
-		} else {
-			this.exchange.exchange(request, stream, socket);
-		}
+		
+		this.exchange.exchange(request, stream, socket);
 	},
 	
 	authenticate: function(credentials, respond, socket) {
