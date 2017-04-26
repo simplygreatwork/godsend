@@ -82,7 +82,7 @@ var connection = godsend.connect({
 });
 ```
 
-### Connecting to the bus using authorization
+### Connecting to the bus with authorization
 
 - Invoke godsend.connect and supply the broker address and credentials.
 - Any subsequent calls to connection.send will queue until the connection is fully established.
@@ -97,7 +97,7 @@ var connection = godsend.connect({
 });
 ```
 
-### Sending a quick message (non-streaming)
+### Sending a simple request (non-streaming)
 
 - Send a message over the bus by calling connection.send().
 - The pattern can be any number of properties of a JSON object.
@@ -109,9 +109,9 @@ connection.send({
   pattern: {
     action: 'message'
   },
-  data : {
+  data : [{
     message : 'hello'
-  },
+  }],
   receive: function(result) {
     console.log('The request has finished.');
     console.log('result.objects: ' + JSON.stringify(result.objects, null, 2));
@@ -120,7 +120,7 @@ connection.send({
 });
 ```
 
-### Sending a streamed message
+### Sending a streamed request
 
 - Send a message over the bus by calling connection.send().
 - The pattern can be any number of properties of a JSON object.
@@ -157,7 +157,7 @@ connection.send({
 });
 ```
 
-### Processing sent messages
+### Processing requests
 
 - You typically process messages using a connection in Node.js and not in the browser. (an exception is reacting to messages sent from the server)
 - "id" can be used to name a processor to run a separate processor "before" or "after".
@@ -170,7 +170,7 @@ connection.send({
 - Call stream.next to continue with the next processor.
 
 ```javascript
-connection.process({
+connection.mount({
   id: 'message',
   on: function(request) {
     request.accept({
@@ -186,13 +186,13 @@ connection.process({
 });
 ```
 
-### Processing a sent message after another processor
+### Processing a sent request before and after other processors
 
 - In this example, processor "message-after" will execute after "message".
 - When you use multiple processors for the same request, the accepted patterns do not have to match exactly.
 
 ```javascript
-connection.process({
+connection.mount({
   id: 'message-after',
   after : 'message'
   on: function(request) {
@@ -208,14 +208,14 @@ connection.process({
 });
 ```
 
-### Processing a sent message using processor weights
+### Processing a sent request using processor weights
 
 - You can add processors in order by weight.
 - Negative weights are early.
 - Positive weights are late.
 
 ```javascript
-connection.process({
+connection.mount({
   id: 'pre-process',
   weight : -100
   on: function(request) {
@@ -228,7 +228,7 @@ connection.process({
   }.bind(this)
 });
 
-connection.process({
+connection.mount({
   id: 'post-process',
   weight : 100
   on: function(request) {
@@ -248,7 +248,7 @@ connection.process({
 You can describe request matching explicitly:
 
 ```javascript
-connection.process({
+connection.mount({
   id: 'message',
   on: function(request) {
     if (request.matches({
@@ -269,7 +269,7 @@ connection.process({
 Or you can implement request matching logic yourself if you need to:
 
 ```javascript
-connection.process({
+connection.mount({
   id: 'message',
   on: function(request) {
     if (matches) {
@@ -285,12 +285,12 @@ connection.process({
 });
 ```
 
-### Declaring multiple versions of a processor
+### Declaring different versions of a processor
 
 - Processor versions are substituted based upon any versions defined within a user's profile.
 
 ```javascript
-connection.process({
+connection.mount({
   id: 'a-processor',
   version: {
     name: 'version-two',
@@ -310,6 +310,11 @@ connection.process({
 });
 ```
 
+### Learning exchange authorization
+
+- When the broker (server) is started with a learning exchange, the sender **must** receive objects pushed from processors for the exchange to be able learn the *receivable* pattern issued by the sender.
+- If a sender receives no response or an empty response for a request, the *receivable* pattern will **not** be learned by the exchange.
+
 ### Understand streaming in Godsend
 
 - Suppose, first, that if you write objects to the bus, that these exact same objects get returned to the sender (echoed).
@@ -317,7 +322,7 @@ connection.process({
 - Imagine, instead, the scenario that each object gets stored, is *not* returned, and a single aggregate response object is created and returned.
 - The inverse of this is also possible: you send one object (a query, for example) and multiple objects get returned as a result.
 - In summary, you use processors in Godsend to *transform* a request to become the response: many to many, one to one, one to many, or many to one.
-- A request in Godsend can have many processors to working together to process the same request data. Fundamentally, this is why a single transformation stream is used to transform a request into a response.
+- A request in Godsend can have many processors to working together to process the same request data. Fundamentally, this is why a transformation stream is used to transform a request into a response.
 
 ### Support
 
