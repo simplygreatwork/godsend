@@ -124,18 +124,24 @@ Register = module.exports = Class.extend({
 		});
 	},
 	
-	sortProcessorsByExecution: function(processors) { // review this entire algorithm
-		// specifically the re-insertion of befores/afters
+	sortProcessorsByExecution: function(processors) { // review this entire algorithm, specifically the re-insertion of befores/afters
+		
 		processors.forEach(function(each, index) { // if a processor references "before", set it's weight to zero
 			if (each.before || each.after) each.weight = 0;
 		}.bind(this));
 		processors.sort(function(a, b) { // sort by weights
 			return a.weight - b.weight;
 		}.bind(this));
-		processors.forEach(function(each, index) {	// now after sorted by weights, now only used toposort instead
+		processors.forEach(function(each, index) {	// now substitute afters for weights to toposort instead
 			if (index > 0) {
-				if (each.after === undefined) {
-					each.after = processors[index - 1].id
+				if (true) {
+					if (each.after === undefined && each.before === undefined) {	// added each.before condition: a major review of toposort library cyclic dependency issues is needed
+						each.after = processors[index - 1].id
+					}
+				} else {
+					if (! (each.weight === undefined)) {		// a major review of toposort library cyclic dependency issues is needed
+						each.after = processors[index - 1].id	// or inte
+					}
 				}
 			}
 		}.bind(this));
