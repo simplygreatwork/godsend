@@ -13,14 +13,45 @@ Register = module.exports = Class.extend({
 	},
 	
 	addProcessor: function(processor) {
-
+		
 		this.ensureProcessor(processor);
 		this.processors.push(processor);
 		this.sortProcessorsByVersion(this.processors);
 		this.checkConflicts();
 		this.cache = {}; // important: MUST invalidate any cached processors when adding
 	},
-
+	
+	removeProcessor: function(properties) {
+		
+		var result = null;
+		for (var i = this.processors.length - 1; i >=0; i--) {
+			var processor = this.processors[i];
+			if (properties.version) {
+				if (processor.id == properties.id && processor.version.name == properties.version) {
+					result = this.processors.splice(index, 1);
+				}
+			} else {
+				if (processor.id == properties.id) {
+					result = this.processors.splice(i, 1);
+				}
+			}
+		}
+		return result;
+	},
+	
+	modifyProcessor : function() {
+		
+		var processor = this.removeProcessor(properties.id);
+		if (processor) {
+			Object.keys(properties).forEach(function(key) {
+				processor[key] = properties[key];
+			}.bind(this));
+			this.addProcessor(processor);
+		} else {
+			console.warn('Could not locate processor to modify: ', properties.id);
+		}
+	},
+	
 	ensureProcessor: function(processor) {
 		
 		processor.id = Utility.ensure(processor.id, uuid());
@@ -92,8 +123,8 @@ Register = module.exports = Class.extend({
 			}
 		});
 	},
-
-	sortProcessorsByExecution: function(processors) { // rethink this entire algorithm
+	
+	sortProcessorsByExecution: function(processors) { // review this entire algorithm
 		// specifically the re-insertion of befores/afters
 		processors.forEach(function(each, index) { // if a processor references "before", set it's weight to zero
 			if (each.before || each.after) each.weight = 0;
@@ -101,11 +132,19 @@ Register = module.exports = Class.extend({
 		processors.sort(function(a, b) { // sort by weights
 			return a.weight - b.weight;
 		}.bind(this));
+		processors.forEach(function(each, index) {	// now after sorted by weights, now only used toposort instead
+			if (index > 0) {
+				if (each.after === undefined) {
+					each.after = processors[index - 1].id
+				}
+			}
+		}.bind(this));
 		var graph = [];
 		processors.forEach(function(each, index) {
 			if (each.before) {
 				graph.push([each, this.findProcessor(processors, each.before)]);
-			} else if (each.after) {
+			}
+			if (each.after) {
 				graph.push([this.findProcessor(processors, each.after), each]);
 			}
 		}.bind(this));
@@ -140,8 +179,13 @@ Register = module.exports = Class.extend({
 		return result;
 	},
 
+	getProcessor: function(id) {
+		
+		return this.findProcessor(this.processors, id);
+	},
+	
 	findProcessor: function(processors, id) {
-
+		
 		var result = null;
 		processors.forEach(function(each) {
 			if (each.id == id) {
@@ -150,7 +194,7 @@ Register = module.exports = Class.extend({
 		});
 		return result;
 	},
-
+	
 	checkConflicts: function() {
 		
 		var conflicts = [];
