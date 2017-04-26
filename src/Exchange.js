@@ -19,14 +19,10 @@ var Open = Class.extend({
 	
 	exchange: function(request, stream, connection) {
 		
-		if (connection.credentials) {
-			this.manage(stream);
-			this.broker.connections.forEach(function(connection) {
-				this.broadcast(request, stream, connection);
-			}.bind(this));
-		} else {
-			console.error('Connection is missing valid credentials.');
-		}
+		this.manage(stream);
+		this.broker.connections.forEach(function(connection) {
+			this.broadcast(request, stream, connection);
+		}.bind(this));
 	},
 	
 	manage: function(stream) {
@@ -255,7 +251,7 @@ var Secure = Open.extend({
 			callback();
 		}
 	},
-
+	
 	authenticate: function(credentials) {
 		
 		var result = false;
@@ -275,6 +271,7 @@ var Secure = Open.extend({
 	exchange: function(request, stream, connection) {
 		
 		if (connection.credentials) {
+			Logger.get('exchange-secure').info('request.pattern: ' + JSON.stringify(request.pattern));
 			this.manage(stream);
 			var username = connection.credentials.username;
 			var user = this.users[username];
@@ -329,6 +326,7 @@ var Learning = Secure.extend({
 	exchange: function(request, stream, connection) {
 		
 		if (connection.credentials) {
+			Logger.get('exchange-learning').info('request.pattern: ' + JSON.stringify(request.pattern));
 			this.manage(stream);
 			var username = connection.credentials.username;
 			var user = this.users[username];
@@ -370,15 +368,15 @@ var Learning = Secure.extend({
 		})) {
 			var added = user.addPattern(type, request.pattern);
 			if (added) {
-				console.log('Updated "' + type + '" for user "' + user.credentials.username + '".');
+				Logger.get('exchange-learning').info('Added "' + type + '" for user "' + user.credentials.username + '".');
 				this.save(user, callback);
 			} else {
-				console.log('Pattern "' + type + '" already exists for user "' + user.credentials.username + '".');
+				Logger.get('exchange-learning').info('Pattern "' + type + '" already exists for user "' + user.credentials.username + '".');
 				if (callback) callback();
 			}
 		}
 	},
-
+	
 	save: function(user, callback) {
 
 		this.connection.send({
