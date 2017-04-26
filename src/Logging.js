@@ -17,6 +17,8 @@ module.exports = Class.extend({
 		Logger.setLevel(Logger.INFO);
 		this.initializeInternalLevels(Logger.INFO);
 		this.initializeInternalLevels(Logger.OFF);
+		Logger.get('exchange-secure').setLevel(Logger.OFF);
+		Logger.get('exchange-learning').setLevel(Logger.OFF);
 	},
 	
 	initializeInternalLevels : function(level) {

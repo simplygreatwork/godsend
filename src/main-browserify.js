@@ -30,6 +30,7 @@ module.exports = {
 			connection : properties.connection
 		});
 		service.mount(properties.connection);
+		return service;
 	},
 	
 	unmount : function(properties) {
