@@ -15,7 +15,10 @@ Connection = module.exports = Class.extend({
 	initialize: function(properties) {
 		
 		Object.assign(this, properties);
-		this.register = new Register();
+		this.register = {
+			inbound : new Register(),
+			outbound : new Register()
+		};
 		this.cache = new Cache();
 		this.initializeTransport();
 		this.initializeSendables();
@@ -55,7 +58,7 @@ Connection = module.exports = Class.extend({
 					this.sendNow(sendable);
 				}
 			}
-		}.bind(this), 100);
+		}.bind(this), 5);
 	},
 	
 	send : function(sendable) {
@@ -107,7 +110,7 @@ Connection = module.exports = Class.extend({
 	
 	receive: function(request, streams) {
 		
-		this.getProcess(request, streams, function(process) {
+		this.getProcess(this.register.inbound, request, streams, function(process) {
 			streams.main.process = process;
 			streams.main.on('end', function() {
 				streams.main.process.end();
@@ -121,11 +124,11 @@ Connection = module.exports = Class.extend({
 		}.bind(this));
 	},
 	
-	getProcess: function(request, streams, callback) {
+	getProcess: function(register, request, streams, callback) {
 		
 		var request = new Request({
 			pattern: request.pattern,
-			candidates: this.register.getProcessors(request.versions)
+			candidates: register.getProcessors(request.versions)
 		});
 		request.prepare(function() {
 			var process = new Process({
@@ -140,14 +143,23 @@ Connection = module.exports = Class.extend({
 	
 	mount: function(processor) {
 		
-		this.register.addProcessor(processor);
+		var route = processor.route || 'inbound';
+		var register = this.register[route];
+		register.addProcessor(processor);
 	},
 	
-	unmount: function(processor) {
+	unmount: function(properties) {
 		
-		var id = processor.id;
-		var version = processor.version;
-		this.register.removeProcessor(processor);
+		var route = properties.route || 'inbound';
+		var register = this.register[route];
+		register.removeProcessor(properties);
+	},
+	
+	remount : function(properties) {
+		
+		var route = properties.route || 'inbound';
+		var register = this.register[route];
+		register.modifyProcessor(properties);
 	},
 	
 	process: function(processor) {
@@ -155,8 +167,13 @@ Connection = module.exports = Class.extend({
 		this.mount(processor);	
 	},
 	
-	unprocess: function(processor) {
+	unprocess: function(properties) {
 		
-		this.unmount(processor);
+		this.unmount(properties);
+	},
+	
+	reprocess : function(properties) {
+		
+		this.remount(properties);
 	}
 });
