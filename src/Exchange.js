@@ -149,7 +149,7 @@ var Secure = Open.extend({
 	
 	process: function(connection) { // the signin receiver should probably be on a separate external bus
 		
-		connection.process({
+		connection.mount({
 			id: 'authentication-sign-in',
 			on: function(request) {
 				request.accept({
@@ -179,7 +179,7 @@ var Secure = Open.extend({
 			}.bind(this)
 		});
 		
-		connection.process({
+		connection.mount({
 			id: 'authentication-sign-out',
 			on: function(request) {
 				request.accept({

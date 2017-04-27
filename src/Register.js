@@ -78,7 +78,7 @@ Register = module.exports = Class.extend({
 		}
 		return result;
 	},
-
+	
 	assembleProcessors: function(versions) {
 		
 		var result = [];
