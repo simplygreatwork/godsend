@@ -141,11 +141,16 @@ Connection = module.exports = Class.extend({
 		});
 	},
 	
-	mount: function(processor) {
+	mount: function(properties) {
 		
-		var route = processor.route || 'inbound';
+		var route = properties.route || 'inbound';
 		var register = this.register[route];
-		register.addProcessor(processor);
+		if (properties.service) {
+			properties.service.connection = this;
+			properties.service.mount();
+		} else {
+			register.addProcessor(properties);
+		}
 	},
 	
 	unmount: function(properties) {
