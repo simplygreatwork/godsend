@@ -17192,11 +17192,16 @@ Connection = module.exports = Class.extend({
 		});
 	},
 	
-	mount: function(processor) {
+	mount: function(properties) {
 		
-		var route = processor.route || 'inbound';
+		var route = properties.route || 'inbound';
 		var register = this.register[route];
-		register.addProcessor(processor);
+		if (properties.service) {
+			properties.service.connection = this;
+			properties.service.mount();
+		} else {
+			register.addProcessor(properties);
+		}
 	},
 	
 	unmount: function(properties) {
@@ -17400,16 +17405,16 @@ Register = module.exports = Class.extend({
 				}
 			} else {
 				if (processor.id == properties.id) {
-					result = this.processors.splice(i, 1);
+					result = this.processors.splice(i, 1)[0];
 				}
 			}
 		}
 		return result;
 	},
 	
-	modifyProcessor : function() {
+	modifyProcessor : function(properties) {
 		
-		var processor = this.removeProcessor(properties.id);
+		var processor = this.removeProcessor(properties);
 		if (processor) {
 			Object.keys(properties).forEach(function(key) {
 				processor[key] = properties[key];
