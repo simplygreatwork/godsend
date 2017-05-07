@@ -17721,11 +17721,6 @@ Sender = module.exports = Class.extend({
 		this.connection.transport.socket.emit('send', request, streams.outbound);
 	},
 	
-	write: function(pattern) {
-		
-		return this.connection.transport.write(pattern);
-	},
-	
 	createStreams : function() {
 		
 		return {
