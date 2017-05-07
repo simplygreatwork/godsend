@@ -42,7 +42,7 @@ Transport = module.exports = Class.extend({
 		});
 		this.socket = ss(this.socket);
 		this.socket.on('receive', function(request, stream) {
-			this.receive(request, stream);
+			this.connection.receiver.receive(request, stream);
 		}.bind(this));
 	},
 	
@@ -50,20 +50,5 @@ Transport = module.exports = Class.extend({
 		
 		console.log('Transport.disconnect');
 		callback();
-	},
-
-	send: function(pattern) {
-
-		var stream = new Stream({
-			socket: this.socket,
-			pattern: pattern
-		});
-		stream.send(pattern);
-		return stream;
-	},
-
-	receive: function(request, stream) {
-
-		this.connection.receive(request, stream);
 	}
 });

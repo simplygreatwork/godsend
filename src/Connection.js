@@ -1,27 +1,28 @@
-var io = require('socket.io-client');
-var ss = require('socket.io-stream');
+
 var Class = require('./Class');
 var Stream = require('./Stream');
 var Transport = require('./Transport');
+var Sender = require('./Sender');
+var Receiver = require('./Receiver');
 var Register = require('./Register');
 var Cache = require('./Cache');
 var Process = require('./Process');
 var Request = require('./Request');
 var Response = require('./Response');
-var assert = require('./Assertions');
 
 Connection = module.exports = Class.extend({
 	
 	initialize: function(properties) {
 		
 		Object.assign(this, properties);
-		this.register = {
-			inbound : new Register(),
-			outbound : new Register()
-		};
-		this.cache = new Cache();
 		this.initializeTransport();
-		this.initializeSendables();
+		this.cache = new Cache();
+		this.sender = new Sender({
+			connection : this
+		});
+		this.receiver = new Receiver({
+			connection : this
+		});
 	},
 	
 	initializeTransport : function() {
@@ -42,87 +43,6 @@ Connection = module.exports = Class.extend({
 
 		this.transport.disconnect(callback);
 	},
-
-	write: function(pattern) {
-		
-		return this.transport.write(pattern);
-	},
-	
-	initializeSendables : function() {
-		
-		this.sendables = [];
-		setInterval(function() {
-			if (this.transport.connected) {
-				if (this.sendables.length > 0) {
-					var sendable = this.sendables.shift();
-					this.sendNow(sendable);
-				}
-			}
-		}.bind(this), 5);
-	},
-	
-	send : function(sendable) {
-		
-		assert.sending(sendable);
-		this.sendables.push(sendable);
-	},
-	
-	sendNow: function(properties) {
-		
-		var result = {
-			objects: [],
-			errors: []
-		};
-		var stream = this.transport.send(properties.pattern);
-		stream.main.on('readable', function() {
-			var object = stream.main.read();
-			if (object && typeof object == 'object') {
-				result.objects.push(object);
-				if (properties.read) properties.read(object);
-			}
-		});
-		stream.error.on('readable', function() {
-			var error = stream.error.read();
-			if (error && typeof error == 'object') {
-				result.errors.push(error);
-				if (properties.error) properties.error(error);
-			}
-		});
-		stream.main.on('end', function() {
-			if (properties.receive) properties.receive(result);
-		});
-		stream.error.on('end', function() {
-			if (false && properties.receive) properties.receive(result);
-		});
-		if (properties.data) {
-			var data = properties.data;
-			if (!(data instanceof Array)) {
-				data = [data];
-			}
-			data.forEach(function(each) {
-				stream.write(each);
-			}.bind(this));
-			stream.end();
-		} else {
-			if (properties.write) properties.write(stream);
-		}
-	},
-	
-	receive: function(request, streams) {
-		
-		this.getProcess(this.register.inbound, request, streams, function(process) {
-			streams.main.process = process;
-			streams.main.on('end', function() {
-				streams.main.process.end();
-			}.bind(this));
-			streams.main.on('readable', function() {
-				var value = streams.main.read();
-				if (value) {
-					streams.main.process.write(value);
-				}
-			}.bind(this));
-		}.bind(this));
-	},
 	
 	getProcess: function(register, request, streams, callback) {
 		
@@ -141,13 +61,27 @@ Connection = module.exports = Class.extend({
 		});
 	},
 	
+	getRegister : function(route) {
+		
+		var route = route || 'inbound';
+		if (route == 'inbound') {
+			return this.receiver.register;
+		} else {
+			return this.sender.register;
+		}
+	},
+	
+	send : function(sendable) {
+		
+		this.sender.send(sendable);
+	},
+	
 	mount: function(properties) {
 		
-		var route = properties.route || 'inbound';
-		var register = this.register[route];
+		var register = this.getRegister(properties.route);
 		if (properties.service) {
 			properties.service.connection = this;
-			properties.service.mount();
+			properties.service.mount(properties);
 		} else {
 			register.addProcessor(properties);
 		}
@@ -155,15 +89,13 @@ Connection = module.exports = Class.extend({
 	
 	unmount: function(properties) {
 		
-		var route = properties.route || 'inbound';
-		var register = this.register[route];
+		var register = this.getRegister(properties.route);
 		register.removeProcessor(properties);
 	},
 	
 	remount : function(properties) {
 		
-		var route = properties.route || 'inbound';
-		var register = this.register[route];
+		var register = this.getRegister(properties.route);
 		register.modifyProcessor(properties);
 	},
 	
