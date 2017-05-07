@@ -42,6 +42,9 @@ Sender = module.exports = Class.extend({
 			objects: [],
 			errors: []
 		};
+		var request = {
+			pattern : properties.pattern
+		};
 		var streams = this.createStreams();
 		streams.inbound.main._write = function(chunk, encoding, done) {
 			result.objects.push(chunk);
@@ -59,9 +62,6 @@ Sender = module.exports = Class.extend({
 		streams.inbound.error.on('finish', function(data) {
 			if (false && properties.receive) properties.receive(result);
 		});
-		var request = {
-			pattern : properties.pattern
-		};
 		this.connection.getProcess(this.register.outbound, request, streams.outbound, function(outbound) {
 			this.connection.getProcess(this.register.inbound, request, streams.inbound, function(inbound) {
 				streams.outbound.main.on('readable', function() {
