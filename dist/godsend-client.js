@@ -17051,7 +17051,6 @@ Class = module.exports = {
 },{}],122:[function(require,module,exports){
 
 var Class = require('./Class');
-var Stream = require('./Stream');
 var Transport = require('./Transport');
 var Sender = require('./Sender');
 var Receiver = require('./Receiver');
@@ -17153,7 +17152,7 @@ Connection = module.exports = Class.extend({
 	}
 });
 
-},{"./Cache":120,"./Class":121,"./Process":123,"./Receiver":125,"./Register":126,"./Request":127,"./Response":128,"./Sender":129,"./Stream":130,"./Transport":131}],123:[function(require,module,exports){
+},{"./Cache":120,"./Class":121,"./Process":123,"./Receiver":125,"./Register":126,"./Request":127,"./Response":128,"./Sender":129,"./Transport":130}],123:[function(require,module,exports){
 var Class = require('./Class');
 var Processor = require('./Processor');
 
@@ -17549,7 +17548,7 @@ Register = module.exports = Class.extend({
 });
 
 }).call(this,require('_process'))
-},{"./Class":121,"./Utility":132,"_process":8,"toposort":114,"uuid/v4":117}],127:[function(require,module,exports){
+},{"./Class":121,"./Utility":131,"_process":8,"toposort":114,"uuid/v4":117}],127:[function(require,module,exports){
 var Class = require('./Class');
 var Utility = require('./Utility');
 
@@ -17608,7 +17607,7 @@ Request = module.exports = Class.extend({
 	}
 });
 
-},{"./Class":121,"./Utility":132}],128:[function(require,module,exports){
+},{"./Class":121,"./Utility":131}],128:[function(require,module,exports){
 var Class = require('./Class');
 
 Response = module.exports = Class.extend({
@@ -17664,6 +17663,9 @@ Sender = module.exports = Class.extend({
 			objects: [],
 			errors: []
 		};
+		var request = {
+			pattern : properties.pattern
+		};
 		var streams = this.createStreams();
 		streams.inbound.main._write = function(chunk, encoding, done) {
 			result.objects.push(chunk);
@@ -17681,9 +17683,6 @@ Sender = module.exports = Class.extend({
 		streams.inbound.error.on('finish', function(data) {
 			if (false && properties.receive) properties.receive(result);
 		});
-		var request = {
-			pattern : properties.pattern
-		};
 		this.connection.getProcess(this.register.outbound, request, streams.outbound, function(outbound) {
 			this.connection.getProcess(this.register.inbound, request, streams.inbound, function(inbound) {
 				streams.outbound.main.on('readable', function() {
@@ -17753,49 +17752,6 @@ Sender = module.exports = Class.extend({
 });
 
 },{"./Assertions":118,"./Class":121,"readable-stream":55,"socket.io-client":56,"socket.io-stream":103,"stream":25}],130:[function(require,module,exports){
-var Class = require('./Class');
-var io = require('socket.io-client');
-var ss = require('socket.io-stream');
-
-Stream = module.exports = Class.extend({
-
-	initialize: function(properties) {
-
-		Object.assign(this, properties);
-		this.main = ss.createStream({
-			highWaterMark: 1024,
-			objectMode: true,
-			allowHalfOpen: true
-		});
-		this.error = ss.createStream({
-			highWaterMark: 1024,
-			objectMode: true,
-			allowHalfOpen: true
-		});
-	},
-
-	send: function(pattern) {
-
-		this.socket.emit('send', {
-			pattern: pattern
-		}, {
-			main: this.main,
-			error: this.error
-		});
-	},
-
-	write: function(data, callback) {
-
-		this.main.write(data, callback);
-	},
-
-	end: function() {
-
-		this.main.end();
-	}
-});
-
-},{"./Class":121,"socket.io-client":56,"socket.io-stream":103}],131:[function(require,module,exports){
 var io = require('socket.io-client');
 var ss = require('socket.io-stream');
 var Logger = require('js-logger');
@@ -17851,7 +17807,7 @@ Transport = module.exports = Class.extend({
 	}
 });
 
-},{"js-logger":30,"socket.io-client":56,"socket.io-stream":103}],132:[function(require,module,exports){
+},{"js-logger":30,"socket.io-client":56,"socket.io-stream":103}],131:[function(require,module,exports){
 Utility = module.exports = {
 
 	digest: function(string) {
@@ -17935,7 +17891,7 @@ Utility = module.exports = {
 	}
 };
 
-},{}],133:[function(require,module,exports){
+},{}],132:[function(require,module,exports){
 
 module.exports = {
 	Bus : require('./Bus'),
@@ -17946,7 +17902,7 @@ module.exports = {
 	configure : function(properties) {
 		
 		var buses = properties.buses;
-		console.log('buses.length: ' + buses.length);
+		if (false) console.log('buses.length: ' + buses.length);
 	},
 	
 	connect : function(properties) {
@@ -17960,22 +17916,8 @@ module.exports = {
 		});
 		result = connection;
 		return result;
-	},
-	
-	mount : function(properties) {
-		
-		var service = new properties.service({
-			connection : properties.connection
-		});
-		service.mount(properties.connection);
-		return service;
-	},
-	
-	unmount : function(properties) {
-		
-		
 	}
 };
 
-},{"./Bus":119,"./Class":121,"uuid/v4":117}]},{},[133])(133)
+},{"./Bus":119,"./Class":121,"uuid/v4":117}]},{},[132])(132)
 });
