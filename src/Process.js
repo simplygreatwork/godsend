@@ -8,9 +8,9 @@ Process = module.exports = Class.extend({
 		Object.assign(this, properties);
 		this.assemble();
 	},
-
+	
 	assemble: function() {
-
+		
 		this.processors.forEach(function(each, index) {
 			this.processors[index] = new Processor({
 				id: each.id,
@@ -25,6 +25,7 @@ Process = module.exports = Class.extend({
 		if (this.processors.length === 0) {
 			this.processors.push(new Processor({
 				process: function(stream) {
+					stream.push(stream.object);
 					stream.next();
 				}
 			}));
