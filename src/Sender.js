@@ -1,4 +1,5 @@
 
+var Writable = require('stream').Writable || require('readable-stream').Writable;
 var io = require('socket.io-client');
 var ss = require('socket.io-stream');
 var Class = require('./Class');
@@ -9,7 +10,10 @@ Sender = module.exports = Class.extend({
 	initialize: function(properties) {
 		
 		Object.assign(this, properties);
-		this.register = new Register();
+		this.register = {
+			outbound : new Register(),
+			inbound : new Register()
+		};
 		this.initializeSendables();
 	},
 	
@@ -23,7 +27,7 @@ Sender = module.exports = Class.extend({
 					this.sendNow(sendable);
 				}
 			}
-		}.bind(this), 5);
+		}.bind(this), 1);
 	},
 	
 	send : function(sendable) {
@@ -38,60 +42,95 @@ Sender = module.exports = Class.extend({
 			objects: [],
 			errors: []
 		};
-		var streams = {
-			main : ss.createStream({
-				highWaterMark: 1024,
-				objectMode: true,
-				allowHalfOpen: true
-			}),
-			error : ss.createStream({
-				highWaterMark: 1024,
-				objectMode: true,
-				allowHalfOpen: true
-			})
-		}
+		var streams = this.createStreams();
+		streams.inbound.main._write = function(chunk, encoding, done) {
+			result.objects.push(chunk);
+			if (properties.read) properties.read(chunk);
+			done();
+		};
+		streams.inbound.main.on('finish', function(data) {
+			if (properties.receive) properties.receive(result);
+		});
+		streams.inbound.error._write = function(chunk, encoding, done) {
+			result.errors.push(chunk);
+			if (properties.error) properties.error(chunk);
+			done();
+		};
+		streams.inbound.error.on('finish', function(data) {
+			if (false && properties.receive) properties.receive(result);
+		});
 		var request = {
 			pattern : properties.pattern
 		};
-		this.connection.getProcess(this.register, request, streams, function(process) {
-			streams.main.on('readable', function() {
-				var object = streams.main.read();
-				if (object && typeof object == 'object') {
-					result.objects.push(object);
-					if (properties.read) properties.read(object);
+		this.connection.getProcess(this.register.outbound, request, streams.outbound, function(outbound) {
+			this.connection.getProcess(this.register.inbound, request, streams.inbound, function(inbound) {
+				streams.outbound.main.on('readable', function() {
+					var object = streams.outbound.main.read();
+					if (object && typeof object == 'object') {
+						inbound.write(object);
+					}
+				});
+				streams.outbound.error.on('readable', function() {
+					var error = streams.outbound.error.read();
+					if (error && typeof error == 'object') {
+						inbound.err(error);
+					}
+				});
+				streams.outbound.main.on('end', function() {
+					inbound.end();
+				});
+				streams.outbound.error.on('end', function() {
+					if (false) streams.inbound.error.end();
+				});
+				if (properties.data) {
+					var data = properties.data;
+					if (!(data instanceof Array)) {
+						data = [data];
+					}
+					data.forEach(function(each) {
+						outbound.write(each);
+					}.bind(this));
+					outbound.end();
+				} else {
+					if (properties.write) properties.write(streams.outbound.main);
 				}
-			});
-			streams.error.on('readable', function() {
-				var error = streams.error.read();
-				if (error && typeof error == 'object') {
-					result.errors.push(error);
-					if (properties.error) properties.error(error);
-				}
-			});
-			streams.main.on('end', function() {
-				if (properties.receive) properties.receive(result);
-			});
-			streams.error.on('end', function() {
-				if (false && properties.receive) properties.receive(result);
-			});
-			if (properties.data) {
-				var data = properties.data;
-				if (!(data instanceof Array)) {
-					data = [data];
-				}
-				data.forEach(function(each) {
-					process.write(each);
-				}.bind(this));
-				process.end();
-			} else {
-				if (properties.write) properties.write(streams.main);
-			}
+			}.bind(this));
 		}.bind(this));
-		this.connection.transport.socket.emit('send', request, streams);
+		this.connection.transport.socket.emit('send', request, streams.outbound);
 	},
 	
 	write: function(pattern) {
 		
 		return this.connection.transport.write(pattern);
+	},
+	
+	createStreams : function() {
+		
+		return {
+			outbound : {
+				main : ss.createStream({
+					highWaterMark: 1024,
+					objectMode: true,
+					allowHalfOpen: true
+				}),
+				error : ss.createStream({
+					highWaterMark: 1024,
+					objectMode: true,
+					allowHalfOpen: true
+				})
+			},
+			inbound : {
+				main : new Writable({
+					highWaterMark: 1024,
+					objectMode: true,
+					allowHalfOpen: true
+				}),
+				error : new Writable({
+					highWaterMark: 1024,
+					objectMode: true,
+					allowHalfOpen: true
+				})
+			}
+		};
 	}
 });

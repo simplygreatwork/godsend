@@ -28,7 +28,7 @@ Register = module.exports = Class.extend({
 			var processor = this.processors[i];
 			if (properties.version) {
 				if (processor.id == properties.id && processor.version.name == properties.version) {
-					result = this.processors.splice(index, 1);
+					result = this.processors.splice(i, 1)[0];
 				}
 			} else {
 				if (processor.id == properties.id) {

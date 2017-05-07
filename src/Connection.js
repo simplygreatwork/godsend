@@ -63,11 +63,13 @@ Connection = module.exports = Class.extend({
 	
 	getRegister : function(route) {
 		
-		var route = route || 'inbound';
-		if (route == 'inbound') {
+		var route = route || 'rebound';
+		if (route == 'rebound') {
 			return this.receiver.register;
-		} else {
-			return this.sender.register;
+		} else if (route == 'outbound') {
+			return this.sender.register.outbound;
+		} else if (route == 'inbound') {
+			return this.sender.register.inbound;
 		}
 	},
 	
@@ -97,20 +99,5 @@ Connection = module.exports = Class.extend({
 		
 		var register = this.getRegister(properties.route);
 		register.modifyProcessor(properties);
-	},
-	
-	process: function(processor) {
-		
-		this.mount(processor);	
-	},
-	
-	unprocess: function(properties) {
-		
-		this.unmount(properties);
-	},
-	
-	reprocess : function(properties) {
-		
-		this.remount(properties);
 	}
 });

@@ -24,10 +24,14 @@ Process = module.exports = Class.extend({
 		}.bind(this));
 		if (this.processors.length === 0) {
 			this.processors.push(new Processor({
+				weight: 0,
 				process: function(stream) {
 					stream.push(stream.object);
 					stream.next();
-				}
+				},
+				errors: this.streams.error,
+				request: this.request,
+				response: this.response
 			}));
 		}
 		this.processors.push(this.streams.main);
@@ -43,8 +47,14 @@ Process = module.exports = Class.extend({
 		this.processors[0].write(data);
 	},
 
-	end: function() {
+	err: function(data) {
+		
+		this.processors[0].errors.write(data);
+	},
 
+	end: function() {
+		
 		this.processors[0].end();
+		this.processors[0].errors.end();
 	}
 });
