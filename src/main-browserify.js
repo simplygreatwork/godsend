@@ -8,7 +8,7 @@ module.exports = {
 	configure : function(properties) {
 		
 		var buses = properties.buses;
-		console.log('buses.length: ' + buses.length);
+		if (false) console.log('buses.length: ' + buses.length);
 	},
 	
 	connect : function(properties) {
@@ -22,19 +22,5 @@ module.exports = {
 		});
 		result = connection;
 		return result;
-	},
-	
-	mount : function(properties) {
-		
-		var service = new properties.service({
-			connection : properties.connection
-		});
-		service.mount(properties.connection);
-		return service;
-	},
-	
-	unmount : function(properties) {
-		
-		
 	}
 };

@@ -1,6 +1,5 @@
 
 var Class = require('./Class');
-var Stream = require('./Stream');
 var Transport = require('./Transport');
 var Sender = require('./Sender');
 var Receiver = require('./Receiver');
