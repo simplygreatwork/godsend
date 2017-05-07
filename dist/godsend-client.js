@@ -17049,30 +17049,31 @@ Class = module.exports = {
 };
 
 },{}],122:[function(require,module,exports){
-var io = require('socket.io-client');
-var ss = require('socket.io-stream');
+
 var Class = require('./Class');
 var Stream = require('./Stream');
 var Transport = require('./Transport');
+var Sender = require('./Sender');
+var Receiver = require('./Receiver');
 var Register = require('./Register');
 var Cache = require('./Cache');
 var Process = require('./Process');
 var Request = require('./Request');
 var Response = require('./Response');
-var assert = require('./Assertions');
 
 Connection = module.exports = Class.extend({
 	
 	initialize: function(properties) {
 		
 		Object.assign(this, properties);
-		this.register = {
-			inbound : new Register(),
-			outbound : new Register()
-		};
-		this.cache = new Cache();
 		this.initializeTransport();
-		this.initializeSendables();
+		this.cache = new Cache();
+		this.sender = new Sender({
+			connection : this
+		});
+		this.receiver = new Receiver({
+			connection : this
+		});
 	},
 	
 	initializeTransport : function() {
@@ -17093,87 +17094,6 @@ Connection = module.exports = Class.extend({
 
 		this.transport.disconnect(callback);
 	},
-
-	write: function(pattern) {
-		
-		return this.transport.write(pattern);
-	},
-	
-	initializeSendables : function() {
-		
-		this.sendables = [];
-		setInterval(function() {
-			if (this.transport.connected) {
-				if (this.sendables.length > 0) {
-					var sendable = this.sendables.shift();
-					this.sendNow(sendable);
-				}
-			}
-		}.bind(this), 5);
-	},
-	
-	send : function(sendable) {
-		
-		assert.sending(sendable);
-		this.sendables.push(sendable);
-	},
-	
-	sendNow: function(properties) {
-		
-		var result = {
-			objects: [],
-			errors: []
-		};
-		var stream = this.transport.send(properties.pattern);
-		stream.main.on('readable', function() {
-			var object = stream.main.read();
-			if (object && typeof object == 'object') {
-				result.objects.push(object);
-				if (properties.read) properties.read(object);
-			}
-		});
-		stream.error.on('readable', function() {
-			var error = stream.error.read();
-			if (error && typeof error == 'object') {
-				result.errors.push(error);
-				if (properties.error) properties.error(error);
-			}
-		});
-		stream.main.on('end', function() {
-			if (properties.receive) properties.receive(result);
-		});
-		stream.error.on('end', function() {
-			if (false && properties.receive) properties.receive(result);
-		});
-		if (properties.data) {
-			var data = properties.data;
-			if (!(data instanceof Array)) {
-				data = [data];
-			}
-			data.forEach(function(each) {
-				stream.write(each);
-			}.bind(this));
-			stream.end();
-		} else {
-			if (properties.write) properties.write(stream);
-		}
-	},
-	
-	receive: function(request, streams) {
-		
-		this.getProcess(this.register.inbound, request, streams, function(process) {
-			streams.main.process = process;
-			streams.main.on('end', function() {
-				streams.main.process.end();
-			}.bind(this));
-			streams.main.on('readable', function() {
-				var value = streams.main.read();
-				if (value) {
-					streams.main.process.write(value);
-				}
-			}.bind(this));
-		}.bind(this));
-	},
 	
 	getProcess: function(register, request, streams, callback) {
 		
@@ -17192,13 +17112,29 @@ Connection = module.exports = Class.extend({
 		});
 	},
 	
+	getRegister : function(route) {
+		
+		var route = route || 'rebound';
+		if (route == 'rebound') {
+			return this.receiver.register;
+		} else if (route == 'outbound') {
+			return this.sender.register.outbound;
+		} else if (route == 'inbound') {
+			return this.sender.register.inbound;
+		}
+	},
+	
+	send : function(sendable) {
+		
+		this.sender.send(sendable);
+	},
+	
 	mount: function(properties) {
 		
-		var route = properties.route || 'inbound';
-		var register = this.register[route];
+		var register = this.getRegister(properties.route);
 		if (properties.service) {
 			properties.service.connection = this;
-			properties.service.mount();
+			properties.service.mount(properties);
 		} else {
 			register.addProcessor(properties);
 		}
@@ -17206,35 +17142,18 @@ Connection = module.exports = Class.extend({
 	
 	unmount: function(properties) {
 		
-		var route = properties.route || 'inbound';
-		var register = this.register[route];
+		var register = this.getRegister(properties.route);
 		register.removeProcessor(properties);
 	},
 	
 	remount : function(properties) {
 		
-		var route = properties.route || 'inbound';
-		var register = this.register[route];
+		var register = this.getRegister(properties.route);
 		register.modifyProcessor(properties);
-	},
-	
-	process: function(processor) {
-		
-		this.mount(processor);	
-	},
-	
-	unprocess: function(properties) {
-		
-		this.unmount(properties);
-	},
-	
-	reprocess : function(properties) {
-		
-		this.remount(properties);
 	}
 });
 
-},{"./Assertions":118,"./Cache":120,"./Class":121,"./Process":123,"./Register":125,"./Request":126,"./Response":127,"./Stream":128,"./Transport":129,"socket.io-client":56,"socket.io-stream":103}],123:[function(require,module,exports){
+},{"./Cache":120,"./Class":121,"./Process":123,"./Receiver":125,"./Register":126,"./Request":127,"./Response":128,"./Sender":129,"./Stream":130,"./Transport":131}],123:[function(require,module,exports){
 var Class = require('./Class');
 var Processor = require('./Processor');
 
@@ -17245,9 +17164,9 @@ Process = module.exports = Class.extend({
 		Object.assign(this, properties);
 		this.assemble();
 	},
-
+	
 	assemble: function() {
-
+		
 		this.processors.forEach(function(each, index) {
 			this.processors[index] = new Processor({
 				id: each.id,
@@ -17261,9 +17180,14 @@ Process = module.exports = Class.extend({
 		}.bind(this));
 		if (this.processors.length === 0) {
 			this.processors.push(new Processor({
+				weight: 0,
 				process: function(stream) {
+					stream.push(stream.object);
 					stream.next();
-				}
+				},
+				errors: this.streams.error,
+				request: this.request,
+				response: this.response
 			}));
 		}
 		this.processors.push(this.streams.main);
@@ -17279,9 +17203,15 @@ Process = module.exports = Class.extend({
 		this.processors[0].write(data);
 	},
 
-	end: function() {
+	err: function(data) {
+		
+		this.processors[0].errors.write(data);
+	},
 
+	end: function() {
+		
 		this.processors[0].end();
+		this.processors[0].errors.end();
 	}
 });
 
@@ -17370,6 +17300,33 @@ Object.assign(Processor.prototype, {
 module.exports = Processor;
 
 },{"readable-stream":55,"stream":25,"util":29}],125:[function(require,module,exports){
+var Class = require('./Class');
+
+Receiver = module.exports = Class.extend({
+
+	initialize: function(properties) {
+		
+		Object.assign(this, properties);
+		this.register = new Register();
+	},
+	
+	receive: function(request, streams) {
+		
+		this.connection.getProcess(this.register, request, streams, function(process) {
+			streams.main.on('end', function() {
+				process.end();
+			}.bind(this));
+			streams.main.on('readable', function() {
+				var value = streams.main.read();
+				if (value) {
+					process.write(value);
+				}
+			}.bind(this));
+		}.bind(this));
+	},
+});
+
+},{"./Class":121}],126:[function(require,module,exports){
 (function (process){
 var toposort = require('toposort');
 var uuid = require('uuid/v4');
@@ -17401,7 +17358,7 @@ Register = module.exports = Class.extend({
 			var processor = this.processors[i];
 			if (properties.version) {
 				if (processor.id == properties.id && processor.version.name == properties.version) {
-					result = this.processors.splice(index, 1);
+					result = this.processors.splice(i, 1)[0];
 				}
 			} else {
 				if (processor.id == properties.id) {
@@ -17592,7 +17549,7 @@ Register = module.exports = Class.extend({
 });
 
 }).call(this,require('_process'))
-},{"./Class":121,"./Utility":130,"_process":8,"toposort":114,"uuid/v4":117}],126:[function(require,module,exports){
+},{"./Class":121,"./Utility":132,"_process":8,"toposort":114,"uuid/v4":117}],127:[function(require,module,exports){
 var Class = require('./Class');
 var Utility = require('./Utility');
 
@@ -17651,7 +17608,7 @@ Request = module.exports = Class.extend({
 	}
 });
 
-},{"./Class":121,"./Utility":130}],127:[function(require,module,exports){
+},{"./Class":121,"./Utility":132}],128:[function(require,module,exports){
 var Class = require('./Class');
 
 Response = module.exports = Class.extend({
@@ -17662,7 +17619,145 @@ Response = module.exports = Class.extend({
 	}
 });
 
-},{"./Class":121}],128:[function(require,module,exports){
+},{"./Class":121}],129:[function(require,module,exports){
+
+var Writable = require('stream').Writable || require('readable-stream').Writable;
+var io = require('socket.io-client');
+var ss = require('socket.io-stream');
+var Class = require('./Class');
+var assert = require('./Assertions');
+
+Sender = module.exports = Class.extend({
+	
+	initialize: function(properties) {
+		
+		Object.assign(this, properties);
+		this.register = {
+			outbound : new Register(),
+			inbound : new Register()
+		};
+		this.initializeSendables();
+	},
+	
+	initializeSendables : function() {
+		
+		this.sendables = [];
+		setInterval(function() {
+			if (this.connection.transport.connected) {
+				if (this.sendables.length > 0) {
+					var sendable = this.sendables.shift();
+					this.sendNow(sendable);
+				}
+			}
+		}.bind(this), 1);
+	},
+	
+	send : function(sendable) {
+		
+		assert.sending(sendable);
+		this.sendables.push(sendable);
+	},
+	
+	sendNow: function(properties) {
+		
+		var result = {
+			objects: [],
+			errors: []
+		};
+		var streams = this.createStreams();
+		streams.inbound.main._write = function(chunk, encoding, done) {
+			result.objects.push(chunk);
+			if (properties.read) properties.read(chunk);
+			done();
+		};
+		streams.inbound.main.on('finish', function(data) {
+			if (properties.receive) properties.receive(result);
+		});
+		streams.inbound.error._write = function(chunk, encoding, done) {
+			result.errors.push(chunk);
+			if (properties.error) properties.error(chunk);
+			done();
+		};
+		streams.inbound.error.on('finish', function(data) {
+			if (false && properties.receive) properties.receive(result);
+		});
+		var request = {
+			pattern : properties.pattern
+		};
+		this.connection.getProcess(this.register.outbound, request, streams.outbound, function(outbound) {
+			this.connection.getProcess(this.register.inbound, request, streams.inbound, function(inbound) {
+				streams.outbound.main.on('readable', function() {
+					var object = streams.outbound.main.read();
+					if (object && typeof object == 'object') {
+						inbound.write(object);
+					}
+				});
+				streams.outbound.error.on('readable', function() {
+					var error = streams.outbound.error.read();
+					if (error && typeof error == 'object') {
+						inbound.err(error);
+					}
+				});
+				streams.outbound.main.on('end', function() {
+					inbound.end();
+				});
+				streams.outbound.error.on('end', function() {
+					if (false) streams.inbound.error.end();
+				});
+				if (properties.data) {
+					var data = properties.data;
+					if (!(data instanceof Array)) {
+						data = [data];
+					}
+					data.forEach(function(each) {
+						outbound.write(each);
+					}.bind(this));
+					outbound.end();
+				} else {
+					if (properties.write) properties.write(streams.outbound.main);
+				}
+			}.bind(this));
+		}.bind(this));
+		this.connection.transport.socket.emit('send', request, streams.outbound);
+	},
+	
+	write: function(pattern) {
+		
+		return this.connection.transport.write(pattern);
+	},
+	
+	createStreams : function() {
+		
+		return {
+			outbound : {
+				main : ss.createStream({
+					highWaterMark: 1024,
+					objectMode: true,
+					allowHalfOpen: true
+				}),
+				error : ss.createStream({
+					highWaterMark: 1024,
+					objectMode: true,
+					allowHalfOpen: true
+				})
+			},
+			inbound : {
+				main : new Writable({
+					highWaterMark: 1024,
+					objectMode: true,
+					allowHalfOpen: true
+				}),
+				error : new Writable({
+					highWaterMark: 1024,
+					objectMode: true,
+					allowHalfOpen: true
+				})
+			}
+		};
+	}
+});
+
+},{"./Assertions":118,"./Class":121,"readable-stream":55,"socket.io-client":56,"socket.io-stream":103,"stream":25}],130:[function(require,module,exports){
 var Class = require('./Class');
 var io = require('socket.io-client');
 var ss = require('socket.io-stream');
@@ -17705,7 +17800,7 @@ Stream = module.exports = Class.extend({
 	}
 });
 
-},{"./Class":121,"socket.io-client":56,"socket.io-stream":103}],129:[function(require,module,exports){
+},{"./Class":121,"socket.io-client":56,"socket.io-stream":103}],131:[function(require,module,exports){
 var io = require('socket.io-client');
 var ss = require('socket.io-stream');
 var Logger = require('js-logger');
@@ -17750,7 +17845,7 @@ Transport = module.exports = Class.extend({
 		});
 		this.socket = ss(this.socket);
 		this.socket.on('receive', function(request, stream) {
-			this.receive(request, stream);
+			this.connection.receiver.receive(request, stream);
 		}.bind(this));
 	},
 	
@@ -17758,25 +17853,10 @@ Transport = module.exports = Class.extend({
 		
 		console.log('Transport.disconnect');
 		callback();
-	},
-
-	send: function(pattern) {
-
-		var stream = new Stream({
-			socket: this.socket,
-			pattern: pattern
-		});
-		stream.send(pattern);
-		return stream;
-	},
-
-	receive: function(request, stream) {
-
-		this.connection.receive(request, stream);
 	}
 });
 
-},{"js-logger":30,"socket.io-client":56,"socket.io-stream":103}],130:[function(require,module,exports){
+},{"js-logger":30,"socket.io-client":56,"socket.io-stream":103}],132:[function(require,module,exports){
 Utility = module.exports = {
 
 	digest: function(string) {
@@ -17860,7 +17940,7 @@ Utility = module.exports = {
 	}
 };
 
-},{}],131:[function(require,module,exports){
+},{}],133:[function(require,module,exports){
 
 module.exports = {
 	Bus : require('./Bus'),
@@ -17902,5 +17982,5 @@ module.exports = {
 	}
 };
 
-},{"./Bus":119,"./Class":121,"uuid/v4":117}]},{},[131])(131)
+},{"./Bus":119,"./Class":121,"uuid/v4":117}]},{},[133])(133)
 });
