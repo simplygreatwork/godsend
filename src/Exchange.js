@@ -32,15 +32,16 @@ var Open = Class.extend({
 		stream.main.on('readable', function() {
 			var object = stream.main.read();
 			if (object) {
-				stream.restreams.forEach(function(each) {
-					each.main.write(object);
+				stream.restreams.forEach(function(restream) {
+					restream.stack.push(object);
+					restream.main.write(object);
 				}.bind(this));
 			}
 		});
 		stream.main.on('end', function() {
-			stream.restreams.forEach(function(each) {
-				each.error.end();
-				each.main.end();
+			stream.restreams.forEach(function(restream) {
+				restream.error.end();
+				restream.main.end();
 			}.bind(this))
 		});
 		stream.main.on('error', function(error) {
@@ -62,15 +63,17 @@ var Open = Class.extend({
 				allowHalfOpen: true
 			})
 		};
-		restream.received = false;
+		restream.stack = [];									// if a receiver returns an object unchanged, do not return to sender
+		restream.received = false;							// and do not learn the request pattern
 		restream.main.on('readable', function() {
 			var data = restream.main.read();
 			if (data) {
-				stream.main.write(data);
-				if ((this.received) && (restream.received === false)) { // a hook for the Learning exchange
-					this.received(request, stream, connection);
-					restream.received = true;
-				};
+				var object = restream.stack.shift();
+				if (this.received) { // a hook primarily for the learning exchange
+					this.received(request, stream, restream, data, object, connection);
+				} else {
+					stream.main.write(data);
+				}
 			}
 		}.bind(this));
 		restream.error.on('readable', function() {
@@ -132,6 +135,7 @@ var Secure = Open.extend({
 				passphrase: this.users['broker'].credentials.passphrase
 			},
 			initialized : function(connection) {
+				this.connection = connection;
 				this.process(connection);
 			}.bind(this),
 			connected: function(connection) { // next: now update broker and master user records (the patterns at least)
@@ -228,25 +232,29 @@ var Secure = Open.extend({
 	},
 
 	load: function(credentials, callback) { // should user authentication be on a separate server-side only bus? less risk?
-
-		if (this.connected) { // actually check the connection to see if connected
-			this.connection.send({
-				pattern: {
-					topic: 'authentication',
-					action: 'get-user'
-				},
-				data: {
-					username: credentials.username
-				},
-				receive: function(result) {
-					if (result.objects.length > 0) {
-						var value = result.objects[0];
-						if (false) console.log('loaded cached user: ' + JSON.stringify(value));
-						this.users[credentials.username] = new User(value);
-					}
-					callback();
-				}.bind(this)
-			});
+		
+		if (this.connection.transport.connected) {
+			if (this.users[credentials.username] === undefined) {
+				this.connection.send({
+					pattern: {
+						topic: 'authentication',
+						action: 'get-user'
+					},
+					data: {
+						username: credentials.username
+					},
+					receive: function(result) {
+						if (result.objects.length > 0) {
+							var value = result.objects[0];
+							if (false) console.log('loaded cached user: ' + JSON.stringify(value));
+							this.users[credentials.username] = new User(value);
+						}
+						callback();
+					}.bind(this)
+				});
+			} else {
+				callback();
+			}
 		} else {
 			callback();
 		}
@@ -353,16 +361,30 @@ var Learning = Secure.extend({
 		}
 	},
 	
-	received: function(request, stream, connection) {
+	received: function(request, stream, restream, data, object, connection) {
 		
-		var username = connection.credentials.username;
-		var user = this.users[username];
-		this.learn('receivable', request, user);
+		var matches = true;
+		if (object) {
+			if (Utility.stringify(data) != Utility.stringify(object)) {
+				matches = false;
+			}
+		} else {
+			matches = false;
+		}
+		if (matches === false) {
+			stream.main.write(data);
+			if (restream.received === false) {
+				var username = connection.credentials.username;
+				var user = this.users[username];
+				this.learn('receivable', request, user);
+				restream.received = true
+			}
+		}
 	},
 	
 	learn: function(type, request, user, callback) {
 		
-		if (!Utility.matchesProperties(request.pattern, {						// cyclical issue
+		if (!Utility.matchesProperties(request.pattern, {						// prevent cyclical issue
 				topic: 'authentication',
 				action: 'put-user'
 		})) {
@@ -378,7 +400,7 @@ var Learning = Secure.extend({
 	},
 	
 	save: function(user, callback) {
-
+		
 		this.connection.send({
 			pattern: {
 				topic: 'authentication',
