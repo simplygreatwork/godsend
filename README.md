@@ -186,15 +186,43 @@ connection.mount({
 });
 ```
 
-### Processing a sent request before and after other processors
+### Processing a sent request before a prior processor
 
-- In this example, processor "message-after" will execute after "message".
-- When you use multiple processors for the same request, the accepted patterns do not have to match exactly.
+- In this example, the processor "store-put-validate-task" would be processed before "store-put".
+- When you have multiple processors in the same request, the accepted patterns do not have to match exactly.
 
 ```javascript
 connection.mount({
-  id: 'message-after',
-  after : 'message'
+  id: 'store-put-validate-task',
+  before : 'store-put'
+  on: function(request) {
+    request.accept({
+      topic : 'store',
+      action: 'put',
+      collection : 'task'
+    });
+  }.bind(this),
+  run: function(stream) {
+    if (valid) {
+      stream.push(stream.object);
+    } else {
+      stream.err(stream.object);
+    }
+    stream.next();
+  }.bind(this)
+});
+```
+
+### Processing a sent request in between two other processors (before, and after).
+
+- In this example, the processor "message" would be processed after "prior-processor" and before "next-processor".
+- When you have multiple processors in the same request, the accepted patterns do not have to match exactly.
+
+```javascript
+connection.mount({
+  id: 'message',
+  after : 'prior-processor'
+  before : 'next-processor'
   on: function(request) {
     request.accept({
       action: 'message'
@@ -304,6 +332,48 @@ connection.mount({
   }.bind(this),
   run: function(stream) {
     console.log('Getting data from the store. (v2 : default)');
+    stream.push(stream.object);
+    stream.next();
+  }.bind(this)
+});
+```
+
+### Processing outbound requests
+
+- Outbound requests are processed before the sender's connection delivers data to the exchange.
+- You could encrypt data or strip data by mounting an outbound processor.
+
+```javascript
+connection.mount({
+  route : 'outbound'
+  id: 'encypt',
+  on: function(request) {
+    request.accept({
+      
+    });
+  }.bind(this),
+  run: function(stream) {
+    stream.push(stream.object);
+    stream.next();
+  }.bind(this)
+});
+```
+
+### Processing inbound requests
+
+- Inbound requests are processed after the exchange has returned a data to the sender's conection - but before the sender receives it. 
+- You could decrypt data or update GUI aspects by mounting an inbound processor.
+
+```javascript
+connection.mount({
+  route : 'inbound'
+  id: 'decrypt',
+  on: function(request) {
+    request.accept({
+      
+    });
+  }.bind(this),
+  run: function(stream) {
     stream.push(stream.object);
     stream.next();
   }.bind(this)
