@@ -32,9 +32,17 @@ Request = module.exports = Class.extend({
 	},
 
 	accept: function() {
-
+		
 		if (arguments[0]) {
-			if (this.matches(arguments[0])) {
+			var has = true;
+			if (arguments[0].has) {
+				arguments[0].has.forEach(function(each) {
+					if (! (each in this.pattern)) {
+						has = false;
+					}
+				}.bind(this));
+			}
+			if (has && this.matches(arguments[0])) {
 				this.accept();
 			} else {
 				this.skip();
@@ -44,14 +52,29 @@ Request = module.exports = Class.extend({
 			this.next();
 		}
 	},
-
+	
 	skip: function() {
-
+		
 		this.next();
 	},
-
+	
 	matches: function(properties) {
-
-		return Utility.matchesProperties(this.pattern, properties);
+		
+		var object = {};
+		Object.keys(properties).forEach(function(key) {
+			if (key != 'has') {
+				object[key] = properties[key];
+			}
+		}.bind(this));
+		return Utility.matchesProperties(this.pattern, object);
+	},
+	
+	has : function(key) {
+		
+		var result = false;
+		if (key in this.pattern) {
+			result = true;
+		}
+		return result;
 	}
 });

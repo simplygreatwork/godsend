@@ -105,7 +105,6 @@ Register = module.exports = Class.extend({
 			}
 			previous = each;
 		}.bind(this));
-		result = this.sortProcessorsByExecution(result);
 		return result;
 	},
 
@@ -134,19 +133,13 @@ Register = module.exports = Class.extend({
 		}.bind(this));
 		processors.forEach(function(each, index) {	// now substitute afters for weights to toposort instead
 			if (index > 0) {
-				if (true) {
-					if (each.after === undefined && each.before === undefined) {	// added each.before condition: a major review of toposort library cyclic dependency issues is needed
-						each.after = processors[index - 1].id
-					}
-				} else {
-					if (! (each.weight === undefined)) {		// a major review of toposort library cyclic dependency issues is needed
-						each.after = processors[index - 1].id	// or inte
-					}
+				if (each.after === undefined && each.before === undefined) {	// added each.before condition: a major review of toposort library cyclic dependency issues is needed
+					each.after = processors[index - 1].id
 				}
 			}
 		}.bind(this));
 		var graph = [];
-		processors.forEach(function(each, index) {
+		processors.forEach(function(each) {
 			if (each.before) {
 				graph.push([each, this.findProcessor(processors, each.before)]);
 			}
@@ -154,6 +147,7 @@ Register = module.exports = Class.extend({
 				graph.push([this.findProcessor(processors, each.after), each]);
 			}
 		}.bind(this));
+		if (false) this.printGraph(graph);
 		var selection = toposort(graph); // only sort "befores/afters" by themselves
 		selection.forEach(function(each) { // else potential for cyclic hell
 			var index = processors.indexOf(each); // issue: consider ensuring that all "before/after" ref weights are identical
@@ -172,7 +166,15 @@ Register = module.exports = Class.extend({
 		}
 		return result;
 	},
-
+	
+	printGraph : function(graph) {
+		
+		graph.forEach(function(each) {
+			console.log('[' + each[0].id + ', ' + each[1].id +  ']');
+		}.bind(this));
+		if (false) console.log('graph: ' + JSON.stringify(graph, null, 2));
+	},
+	
 	getMatchingWeights: function(selection, weight) {
 
 		var result = [];
@@ -190,12 +192,19 @@ Register = module.exports = Class.extend({
 		return this.findProcessor(this.processors, id);
 	},
 	
-	findProcessor: function(processors, id) {
+	findProcessor: function(processors, ids) {
 		
 		var result = null;
-		processors.forEach(function(each) {
-			if (each.id == id) {
-				result = each;
+		if (! (ids instanceof Array)) {
+			ids = [ids];
+		}
+		ids.forEach(function(id) {
+			if (result === null) {
+				processors.forEach(function(each) {
+					if (each.id == id) {
+						result = each;
+					}
+				});
 			}
 		});
 		return result;

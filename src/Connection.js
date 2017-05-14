@@ -37,9 +37,9 @@ Connection = module.exports = Class.extend({
 		
 		this.transport.connect(callback);
 	},
-
+	
 	disconnect: function(callback) {
-
+		
 		this.transport.disconnect(callback);
 	},
 	
@@ -50,6 +50,7 @@ Connection = module.exports = Class.extend({
 			candidates: register.getProcessors(request.versions)
 		});
 		request.prepare(function() {
+			request.processors = register.sortProcessorsByExecution(request.processors);
 			var process = new Process({
 				processors: request.processors,
 				streams: streams,
