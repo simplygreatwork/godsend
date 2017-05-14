@@ -361,7 +361,7 @@ connection.mount({
 
 ### Processing inbound requests
 
-- Inbound requests are processed after the exchange has returned a data to the sender's conection - but before the sender receives it. 
+- Inbound requests are processed after the exchange has returned a data to the sender's connection - but before the sender receives it. 
 - You could decrypt data or update GUI aspects by mounting an inbound processor.
 
 ```javascript
@@ -382,8 +382,8 @@ connection.mount({
 
 ### Learning exchange authorization
 
-- When the broker (server) is started with a learning exchange, the sender **must** receive objects pushed from processors for the exchange to be able learn the *receivable* pattern issued by the sender.
-- If a sender receives no response or an empty response for a request, the *receivable* pattern will **not** be learned by the exchange.
+- The learning exchange will learn patterns issued by a sender, **only if** the receiver's processors modify at least one or more of the objects returned to that sender.
+- If a receiver's processors do not modify or transform any of the objects from the sender, the **receivable** pattern will **not** be learned.
 
 ### Understand streaming in Godsend
 
