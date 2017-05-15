@@ -314,6 +314,7 @@ var Learning = Secure.extend({
 	initialize: function(properties) {
 		
 		Object.assign(this, properties);
+		this.learnables = this.learnables || [];
 		this.initializeUsers();
 	},
 	
@@ -388,7 +389,13 @@ var Learning = Secure.extend({
 				topic: 'authentication',
 				action: 'put-user'
 		})) {
-			var added = user.addPattern(type, request.pattern);
+			var pattern = {};
+			Object.keys(request.pattern).forEach(function(key) {
+				if (this.learnables.indexOf(key) > -1) {
+					pattern[key] = request.pattern[key];
+				}
+			}.bind(this));
+			var added = user.addPattern(type, pattern);
 			if (added) {
 				Logger.get('exchange-learning').info('Added "' + type + '" for user "' + user.credentials.username + '".');
 				this.save(user, callback);
@@ -397,6 +404,11 @@ var Learning = Secure.extend({
 				if (callback) callback();
 			}
 		}
+	},
+	
+	preparePattern : function() {
+		
+		
 	},
 	
 	save: function(user, callback) {
