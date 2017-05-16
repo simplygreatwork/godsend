@@ -17088,9 +17088,9 @@ Connection = module.exports = Class.extend({
 		
 		this.transport.connect(callback);
 	},
-
+	
 	disconnect: function(callback) {
-
+		
 		this.transport.disconnect(callback);
 	},
 	
@@ -17101,6 +17101,7 @@ Connection = module.exports = Class.extend({
 			candidates: register.getProcessors(request.versions)
 		});
 		request.prepare(function() {
+			request.processors = register.sortProcessorsByExecution(request.processors);
 			var process = new Process({
 				processors: request.processors,
 				streams: streams,
@@ -17434,7 +17435,6 @@ Register = module.exports = Class.extend({
 			}
 			previous = each;
 		}.bind(this));
-		result = this.sortProcessorsByExecution(result);
 		return result;
 	},
 
@@ -17463,19 +17463,13 @@ Register = module.exports = Class.extend({
 		}.bind(this));
 		processors.forEach(function(each, index) {	// now substitute afters for weights to toposort instead
 			if (index > 0) {
-				if (true) {
-					if (each.after === undefined && each.before === undefined) {	// added each.before condition: a major review of toposort library cyclic dependency issues is needed
-						each.after = processors[index - 1].id
-					}
-				} else {
-					if (! (each.weight === undefined)) {		// a major review of toposort library cyclic dependency issues is needed
-						each.after = processors[index - 1].id	// or inte
-					}
+				if (each.after === undefined && each.before === undefined) {	// added each.before condition: a major review of toposort library cyclic dependency issues is needed
+					each.after = processors[index - 1].id
 				}
 			}
 		}.bind(this));
 		var graph = [];
-		processors.forEach(function(each, index) {
+		processors.forEach(function(each) {
 			if (each.before) {
 				graph.push([each, this.findProcessor(processors, each.before)]);
 			}
@@ -17483,6 +17477,7 @@ Register = module.exports = Class.extend({
 				graph.push([this.findProcessor(processors, each.after), each]);
 			}
 		}.bind(this));
+		if (false) this.printGraph(graph);
 		var selection = toposort(graph); // only sort "befores/afters" by themselves
 		selection.forEach(function(each) { // else potential for cyclic hell
 			var index = processors.indexOf(each); // issue: consider ensuring that all "before/after" ref weights are identical
@@ -17501,7 +17496,15 @@ Register = module.exports = Class.extend({
 		}
 		return result;
 	},
-
+	
+	printGraph : function(graph) {
+		
+		graph.forEach(function(each) {
+			console.log('[' + each[0].id + ', ' + each[1].id +  ']');
+		}.bind(this));
+		if (false) console.log('graph: ' + JSON.stringify(graph, null, 2));
+	},
+	
 	getMatchingWeights: function(selection, weight) {
 
 		var result = [];
@@ -17519,12 +17522,19 @@ Register = module.exports = Class.extend({
 		return this.findProcessor(this.processors, id);
 	},
 	
-	findProcessor: function(processors, id) {
+	findProcessor: function(processors, ids) {
 		
 		var result = null;
-		processors.forEach(function(each) {
-			if (each.id == id) {
-				result = each;
+		if (! (ids instanceof Array)) {
+			ids = [ids];
+		}
+		ids.forEach(function(id) {
+			if (result === null) {
+				processors.forEach(function(each) {
+					if (each.id == id) {
+						result = each;
+					}
+				});
 			}
 		});
 		return result;
@@ -17583,9 +17593,17 @@ Request = module.exports = Class.extend({
 	},
 
 	accept: function() {
-
+		
 		if (arguments[0]) {
-			if (this.matches(arguments[0])) {
+			var has = true;
+			if (arguments[0].has) {
+				arguments[0].has.forEach(function(each) {
+					if (! (each in this.pattern)) {
+						has = false;
+					}
+				}.bind(this));
+			}
+			if (has && this.matches(arguments[0])) {
 				this.accept();
 			} else {
 				this.skip();
@@ -17595,15 +17613,30 @@ Request = module.exports = Class.extend({
 			this.next();
 		}
 	},
-
+	
 	skip: function() {
-
+		
 		this.next();
 	},
-
+	
 	matches: function(properties) {
-
-		return Utility.matchesProperties(this.pattern, properties);
+		
+		var object = {};
+		Object.keys(properties).forEach(function(key) {
+			if (key != 'has') {
+				object[key] = properties[key];
+			}
+		}.bind(this));
+		return Utility.matchesProperties(this.pattern, object);
+	},
+	
+	has : function(key) {
+		
+		var result = false;
+		if (key in this.pattern) {
+			result = true;
+		}
+		return result;
 	}
 });
 
