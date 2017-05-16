@@ -385,13 +385,13 @@ var Learning = Secure.extend({
 	
 	learn: function(type, request, user, callback) {
 		
-		if (!Utility.matchesProperties(request.pattern, {						// prevent cyclical issue
+		if (!Utility.matchesProperties(request.pattern, {							// prevent cyclical issue
 				topic: 'authentication',
 				action: 'put-user'
 		})) {
 			var pattern = {};
 			Object.keys(request.pattern).forEach(function(key) {
-				if (this.learnables.indexOf(key) > -1) {
+				if (Object(request.pattern[key]) !== request.pattern[key]) {	// learn only the primitives in the pattern
 					pattern[key] = request.pattern[key];
 				}
 			}.bind(this));
