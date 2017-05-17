@@ -52,13 +52,14 @@ Connection = module.exports = Class.extend({
 		request.prepare(function() {
 			request.processors = register.sortProcessorsByExecution(request.processors);
 			var process = new Process({
+				connection : this,
 				processors: request.processors,
 				streams: streams,
 				request: request,
 				response: new Response()
 			});
 			callback(process);
-		});
+		}.bind(this));
 	},
 	
 	getRegister : function(route) {

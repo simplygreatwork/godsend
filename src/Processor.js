@@ -30,7 +30,8 @@ Object.assign(Processor.prototype, {
 					push: this.push.bind(this),
 					err: this.err.bind(this),
 					request: this.request,
-					response: this.response
+					response: this.response,
+					connection : this.connection
 				});
 			};
 			this._flush = function(next) {
@@ -54,7 +55,8 @@ Object.assign(Processor.prototype, {
 					push: this.push.bind(this),
 					err: this.err.bind(this),
 					request: this.request,
-					response: this.response
+					response: this.response,
+					connection : this.connection
 				});
 			};
 			this._flush = function(next) {

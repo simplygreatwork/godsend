@@ -19,7 +19,8 @@ Process = module.exports = Class.extend({
 				ending: each.ending,
 				errors: this.streams.error,
 				request: this.request,
-				response: this.response
+				response: this.response,
+				connection: this.connection
 			})
 		}.bind(this));
 		if (this.processors.length === 0) {
@@ -31,7 +32,8 @@ Process = module.exports = Class.extend({
 				},
 				errors: this.streams.error,
 				request: this.request,
-				response: this.response
+				response: this.response,
+				connection: this.connection
 			}));
 		}
 		this.processors.push(this.streams.main);
