@@ -17096,20 +17096,22 @@ Connection = module.exports = Class.extend({
 	
 	getProcess: function(register, request, streams, callback) {
 		
-		var request = new Request({
+		request = new Request({
 			pattern: request.pattern,
+			username: request.username,
 			candidates: register.getProcessors(request.versions)
 		});
 		request.prepare(function() {
 			request.processors = register.sortProcessorsByExecution(request.processors);
 			var process = new Process({
+				connection : this,
 				processors: request.processors,
 				streams: streams,
 				request: request,
 				response: new Response()
 			});
 			callback(process);
-		});
+		}.bind(this));
 	},
 	
 	getRegister : function(route) {
@@ -17132,12 +17134,7 @@ Connection = module.exports = Class.extend({
 	mount: function(properties) {
 		
 		var register = this.getRegister(properties.route);
-		if (properties.service) {
-			properties.service.connection = this;
-			properties.service.mount(properties);
-		} else {
-			register.addProcessor(properties);
-		}
+		register.addProcessor(properties);
 	},
 	
 	unmount: function(properties) {
@@ -17150,6 +17147,12 @@ Connection = module.exports = Class.extend({
 		
 		var register = this.getRegister(properties.route);
 		register.modifyProcessor(properties);
+	},
+	
+	install : function(properties) {
+		
+		properties.service.connection = this;
+		properties.service.install(properties);
 	}
 });
 
@@ -17175,7 +17178,8 @@ Process = module.exports = Class.extend({
 				ending: each.ending,
 				errors: this.streams.error,
 				request: this.request,
-				response: this.response
+				response: this.response,
+				connection: this.connection
 			})
 		}.bind(this));
 		if (this.processors.length === 0) {
@@ -17187,7 +17191,8 @@ Process = module.exports = Class.extend({
 				},
 				errors: this.streams.error,
 				request: this.request,
-				response: this.response
+				response: this.response,
+				connection: this.connection
 			}));
 		}
 		this.processors.push(this.streams.main);
@@ -17248,7 +17253,8 @@ Object.assign(Processor.prototype, {
 					push: this.push.bind(this),
 					err: this.err.bind(this),
 					request: this.request,
-					response: this.response
+					response: this.response,
+					connection : this.connection
 				});
 			};
 			this._flush = function(next) {
@@ -17272,7 +17278,8 @@ Object.assign(Processor.prototype, {
 					push: this.push.bind(this),
 					err: this.err.bind(this),
 					request: this.request,
-					response: this.response
+					response: this.response,
+					connection : this.connection
 				});
 			};
 			this._flush = function(next) {
@@ -17699,6 +17706,9 @@ Sender = module.exports = Class.extend({
 		var request = {
 			pattern : properties.pattern
 		};
+		if (this.connection.credentials) {
+			request.username = this.connection.credentials.username;
+		}
 		var streams = this.createStreams();
 		streams.inbound.main._write = function(chunk, encoding, done) {
 			result.objects.push(chunk);
