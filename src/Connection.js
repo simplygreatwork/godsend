@@ -83,12 +83,7 @@ Connection = module.exports = Class.extend({
 	mount: function(properties) {
 		
 		var register = this.getRegister(properties.route);
-		if (properties.service) {
-			properties.service.connection = this;
-			properties.service.install(properties);
-		} else {
-			register.addProcessor(properties);
-		}
+		register.addProcessor(properties);
 	},
 	
 	unmount: function(properties) {
@@ -101,5 +96,11 @@ Connection = module.exports = Class.extend({
 		
 		var register = this.getRegister(properties.route);
 		register.modifyProcessor(properties);
+	},
+	
+	install : function(properties) {
+		
+		properties.service.connection = this;
+		properties.service.install(properties);
 	}
 });
