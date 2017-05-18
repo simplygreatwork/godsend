@@ -45,6 +45,9 @@ Sender = module.exports = Class.extend({
 		var request = {
 			pattern : properties.pattern
 		};
+		if (this.connection.credentials) {
+			request.username = this.connection.credentials.username;
+		}
 		var streams = this.createStreams();
 		streams.inbound.main._write = function(chunk, encoding, done) {
 			result.objects.push(chunk);

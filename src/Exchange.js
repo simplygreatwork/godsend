@@ -406,11 +406,6 @@ var Learning = Secure.extend({
 		}
 	},
 	
-	preparePattern : function() {
-		
-		
-	},
-	
 	save: function(user, callback) {
 		
 		this.connection.send({

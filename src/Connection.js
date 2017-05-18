@@ -45,8 +45,9 @@ Connection = module.exports = Class.extend({
 	
 	getProcess: function(register, request, streams, callback) {
 		
-		var request = new Request({
+		request = new Request({
 			pattern: request.pattern,
+			username: request.username,
 			candidates: register.getProcessors(request.versions)
 		});
 		request.prepare(function() {
