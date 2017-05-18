@@ -85,7 +85,7 @@ Connection = module.exports = Class.extend({
 		var register = this.getRegister(properties.route);
 		if (properties.service) {
 			properties.service.connection = this;
-			properties.service.mount(properties);
+			properties.service.install(properties);
 		} else {
 			register.addProcessor(properties);
 		}
