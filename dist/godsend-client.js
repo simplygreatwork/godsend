@@ -17314,7 +17314,7 @@ Receiver = module.exports = Class.extend({
 	initialize: function(properties) {
 		
 		Object.assign(this, properties);
-		this.register = new Register();
+		this.register = new Register({name : 'rebound'});
 	},
 	
 	receive: function(request, streams) {
@@ -17462,26 +17462,31 @@ Register = module.exports = Class.extend({
 	
 	sortProcessorsByExecution: function(processors) { // review this entire algorithm, specifically the re-insertion of befores/afters
 		
+		processors.forEach(function(each, index) {	// modifications to weights, etc must apply only to this request
+			each._before = each.before || null;
+			each._after = each.after || null;
+			each._weight = each.weight || null;
+		}.bind(this));
 		processors.forEach(function(each, index) { // if a processor references "before", set it's weight to zero
-			if (each.before || each.after) each.weight = 0;
+			if (each._before || each._after) each._weight = 0;
 		}.bind(this));
 		processors.sort(function(a, b) { // sort by weights
-			return a.weight - b.weight;
+			return a._weight - b._weight;
 		}.bind(this));
 		processors.forEach(function(each, index) {	// now substitute afters for weights to toposort instead
 			if (index > 0) {
-				if (each.after === undefined && each.before === undefined) {	// added each.before condition: a major review of toposort library cyclic dependency issues is needed
-					each.after = processors[index - 1].id
+				if (each._after === undefined && each._before === undefined) {	// added each.before condition: a major review of toposort library cyclic dependency issues is needed
+					each._after = processors[index - 1].id
 				}
 			}
 		}.bind(this));
 		var graph = [];
 		processors.forEach(function(each) {
-			if (each.before) {
-				graph.push([each, this.findProcessor(processors, each.before)]);
+			if (each._before) {
+				graph.push([each, this.findProcessor(processors, each._before)]);
 			}
-			if (each.after) {
-				graph.push([this.findProcessor(processors, each.after), each]);
+			if (each._after) {
+				graph.push([this.findProcessor(processors, each._after), each]);
 			}
 		}.bind(this));
 		if (false) this.printGraph(graph);
@@ -17493,7 +17498,7 @@ Register = module.exports = Class.extend({
 		var result = [];
 		if (processors.length > 0) {
 			for (var i = 0; i < processors.length; i++) { // and then reinsert the "befores/afters" back into the list
-				this.getMatchingWeights(selection, processors[i].weight).forEach(function(each) {
+				this.getMatchingWeights(selection, processors[i]._weight).forEach(function(each) {
 					result.push(each);
 				}.bind(this));
 				result.push(processors[i]);
@@ -17516,7 +17521,7 @@ Register = module.exports = Class.extend({
 
 		var result = [];
 		for (var i = selection.length - 1; i >= 0; i--) {
-			if (selection[i].weight == weight) {
+			if (selection[i]._weight == weight) {
 				var select = selection.splice(i, 1);
 				result.unshift(select[0]);
 			}
@@ -17544,6 +17549,9 @@ Register = module.exports = Class.extend({
 				});
 			}
 		});
+		if (result === null) {
+			console.warn('Processor could not be found: ' + ids);
+		}
 		return result;
 	},
 	
@@ -17672,8 +17680,12 @@ Sender = module.exports = Class.extend({
 		
 		Object.assign(this, properties);
 		this.register = {
-			outbound : new Register(),
-			inbound : new Register()
+			outbound : new Register({
+				name : 'outbound'
+			}),
+			inbound : new Register({
+				name : 'inbound'
+			})
 		};
 		this.initializeSendables();
 	},
