@@ -5,7 +5,7 @@ Receiver = module.exports = Class.extend({
 	initialize: function(properties) {
 		
 		Object.assign(this, properties);
-		this.register = new Register();
+		this.register = new Register({name : 'rebound'});
 	},
 	
 	receive: function(request, streams) {
