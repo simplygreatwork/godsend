@@ -11,8 +11,12 @@ Sender = module.exports = Class.extend({
 		
 		Object.assign(this, properties);
 		this.register = {
-			outbound : new Register(),
-			inbound : new Register()
+			outbound : new Register({
+				name : 'outbound'
+			}),
+			inbound : new Register({
+				name : 'inbound'
+			})
 		};
 		this.initializeSendables();
 	},
