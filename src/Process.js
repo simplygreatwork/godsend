@@ -14,7 +14,7 @@ Process = module.exports = Class.extend({
 		this.processors.forEach(function(each, index) {
 			this.processors[index] = new Processor({
 				id: each.id,
-				weight: each.weight,
+				weight: each._weight,
 				process: each.run,
 				ending: each.ending,
 				errors: this.streams.error,

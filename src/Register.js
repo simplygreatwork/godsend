@@ -126,9 +126,9 @@ Register = module.exports = Class.extend({
 	sortProcessorsByExecution: function(processors) { // review this entire algorithm, specifically the re-insertion of befores/afters
 		
 		processors.forEach(function(each, index) {	// modifications to weights, etc must apply only to this request
-			each._before = each.before || null;
-			each._after = each.after || null;
-			each._weight = each.weight || null;
+			each._before = each.before || undefined;
+			each._after = each.after || undefined;
+			each._weight = each.weight || undefined;
 		}.bind(this));
 		processors.forEach(function(each, index) { // if a processor references "before", set it's weight to zero
 			if (each._before || each._after) each._weight = 0;
@@ -181,7 +181,7 @@ Register = module.exports = Class.extend({
 	},
 	
 	getMatchingWeights: function(selection, weight) {
-
+		
 		var result = [];
 		for (var i = selection.length - 1; i >= 0; i--) {
 			if (selection[i]._weight == weight) {
@@ -191,7 +191,7 @@ Register = module.exports = Class.extend({
 		}
 		return result;
 	},
-
+	
 	getProcessor: function(id) {
 		
 		return this.findProcessor(this.processors, id);
@@ -212,9 +212,6 @@ Register = module.exports = Class.extend({
 				});
 			}
 		});
-		if (result === null) {
-			console.warn('Processor could not be found: ' + ids);
-		}
 		return result;
 	},
 	
