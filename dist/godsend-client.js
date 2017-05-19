@@ -17518,17 +17518,17 @@ Register = module.exports = Class.extend({
 	},
 	
 	getMatchingWeights: function(selection, weight) {
-
+		
 		var result = [];
 		for (var i = selection.length - 1; i >= 0; i--) {
-			if (selection[i].weight == weight) {
+			if (selection[i]._weight == weight) {
 				var select = selection.splice(i, 1);
 				result.unshift(select[0]);
 			}
 		}
 		return result;
 	},
-
+	
 	getProcessor: function(id) {
 		
 		return this.findProcessor(this.processors, id);
