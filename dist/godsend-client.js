@@ -17473,7 +17473,6 @@ Register = module.exports = Class.extend({
 		processors.sort(function(a, b) { // sort by weights
 			return a._weight - b._weight;
 		}.bind(this));
-		var ids = [];
 		processors.forEach(function(each, index) {	// now substitute afters for weights to toposort instead
 			if (index > 0) {
 				if (each._after === undefined && each._before === undefined) {	// added each.before condition: a major review of toposort library cyclic dependency issues is needed
@@ -17745,7 +17744,7 @@ Sender = module.exports = Class.extend({
 				});
 				streams.outbound.error.on('readable', function() {
 					var error = streams.outbound.error.read();
-					if (error && typeof error == 'object') {
+					if (error) {
 						inbound.err(error);
 					}
 				});

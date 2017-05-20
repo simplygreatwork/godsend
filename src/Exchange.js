@@ -223,14 +223,14 @@ var Secure = Open.extend({
 	},
 	
 	err: function(stream, message) {
-
+		
 		Logger.get('exchange').error(message);
 		console.error(message);
 		stream.error.write(message);
 		stream.main.end();
 		stream.error.end();
 	},
-
+	
 	load: function(credentials, callback) { // should user authentication be on a separate server-side only bus? less risk?
 		
 		if (this.connection.transport.connected) {
