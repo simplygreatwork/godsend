@@ -17465,7 +17465,7 @@ Register = module.exports = Class.extend({
 		processors.forEach(function(each, index) {	// modifications to weights, etc must apply only to this request
 			each._before = each.before || undefined;
 			each._after = each.after || undefined;
-			each._weight = each.weight || undefined;
+			each._weight = each.weight;
 		}.bind(this));
 		processors.forEach(function(each, index) { // if a processor references "before", set it's weight to zero
 			if (each._before || each._after) each._weight = 0;
@@ -17473,6 +17473,7 @@ Register = module.exports = Class.extend({
 		processors.sort(function(a, b) { // sort by weights
 			return a._weight - b._weight;
 		}.bind(this));
+		var ids = [];
 		processors.forEach(function(each, index) {	// now substitute afters for weights to toposort instead
 			if (index > 0) {
 				if (each._after === undefined && each._before === undefined) {	// added each.before condition: a major review of toposort library cyclic dependency issues is needed

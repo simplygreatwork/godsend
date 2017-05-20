@@ -3,7 +3,7 @@
   "description": "Separation of concerns for streaming microservices.",
   "author": "Philip Weaver",
   "contributors": [],
-  "version": "0.5.2",
+  "version": "0.5.3",
   "main": "./src/main-node.js",
   "scripts": {
     "start": "node tests/main.js"
