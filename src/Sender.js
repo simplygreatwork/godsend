@@ -79,7 +79,7 @@ Sender = module.exports = Class.extend({
 				});
 				streams.outbound.error.on('readable', function() {
 					var error = streams.outbound.error.read();
-					if (error && typeof error == 'object') {
+					if (error) {
 						inbound.err(error);
 					}
 				});
