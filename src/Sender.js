@@ -80,7 +80,11 @@ Sender = module.exports = Class.extend({
 				streams.outbound.error.on('readable', function() {
 					var error = streams.outbound.error.read();
 					if (error) {
-						inbound.err(error);
+						if (true) {
+							streams.inbound.error.write(error);
+						} else {
+							inbound.err(error);			// throws write error
+						}
 					}
 				});
 				streams.outbound.main.on('end', function() {
