@@ -123,95 +123,75 @@ Register = module.exports = Class.extend({
 		});
 	},
 	
-	sortProcessorsByExecution: function(processors) { // review this entire algorithm, specifically the re-insertion of befores/afters
+	sortProcessorsByExecution : function(processors) {
 		
-		processors.forEach(function(each, index) {	// modifications to weights, etc must apply only to this request
-			each._before = each.before || undefined;
-			each._after = each.after || undefined;
-			each._weight = each.weight;
-		}.bind(this));
-		processors.forEach(function(each, index) { // if a processor references "before", set it's weight to zero
-			if (each._before || each._after) each._weight = 0;
-		}.bind(this));
-		processors.sort(function(a, b) { // sort by weights
-			return a._weight - b._weight;
-		}.bind(this));
-		processors.forEach(function(each, index) {	// now substitute afters for weights to toposort instead
-			if (index > 0) {
-				if (each._after === undefined && each._before === undefined) {	// added each.before condition: a major review of toposort library cyclic dependency issues is needed
-					each._after = processors[index - 1].id
-				}
-			}
-		}.bind(this));
-		var graph = [];
+		var all = processors;
+		var src = [];
 		processors.forEach(function(each) {
-			if (each._before) {
-				graph.push([each, this.findProcessor(processors, each._before)]);
-			}
-			if (each._after) {
-				graph.push([this.findProcessor(processors, each._after), each]);
-			}
+			src.push(each);
 		}.bind(this));
-		if (false) this.printGraph(graph);
-		var selection = toposort(graph); // only sort "befores/afters" by themselves
-		selection.forEach(function(each) { // else potential for cyclic hell
-			var index = processors.indexOf(each); // issue: consider ensuring that all "before/after" ref weights are identical
-			if (index > -1) processors.splice(index, 1);
-		}.bind(this));
-		var result = [];
-		if (processors.length > 0) {
-			for (var i = 0; i < processors.length; i++) { // and then reinsert the "befores/afters" back into the list
-				this.getMatchingWeights(selection, processors[i]._weight).forEach(function(each) {
-					result.push(each);
-				}.bind(this));
-				result.push(processors[i]);
-			}
-		} else {
-			result = selection;
-		}
-		return result;
-	},
-	
-	printGraph : function(graph) {
-		
-		graph.forEach(function(each) {
-			console.log('[' + each[0].id + ', ' + each[1].id +  ']');
-		}.bind(this));
-		if (false) console.log('graph: ' + JSON.stringify(graph, null, 2));
-	},
-	
-	getMatchingWeights: function(selection, weight) {
-		
-		var result = [];
-		for (var i = selection.length - 1; i >= 0; i--) {
-			if (selection[i]._weight == weight) {
-				var select = selection.splice(i, 1);
-				result.unshift(select[0]);
+		var dest = [{
+			id : 'start',
+			weight : -Number.MAX_VALUE
+		}, {
+			id : 'end',
+			weight : Number.MAX_VALUE
+		}];
+		while (src.length > 0) {
+			var object = src.shift();
+			var index = this.insert(object, dest, all);
+			if (index === -1) {
+				src.push(object);
 			}
 		}
-		return result;
+		dest.shift();
+		dest.pop();
+		return dest;
 	},
 	
-	getProcessor: function(id) {
+	insert : function(object, dest, all) {
 		
-		return this.findProcessor(this.processors, id);
+		var index = -1;
+		var stack = [];
+		for (var i = 0; i < dest.length; i++) {
+			var each = dest[i];
+			var after = this.findID(object.after, all);
+			var before = this.findID(object.before, all);
+			if (after && before && (stack.indexOf(after) > -1) && (each.id == before)) {
+				index = i;
+				break;
+			} else if ((after == each.id) && (before == null)) {
+				index = i + 1;
+				break;
+			} else if ((before == each.id) && (after == null)) {
+				index = i;
+				break;
+			} else if ((object.weight < each.weight) && (after == null) && (before == null)) {
+				index = i;
+				break;
+			}
+			stack.push(each.id);
+		}
+		if (index > -1) {
+			dest.splice(index, 0, object);
+		}
+		return index;
 	},
 	
-	findProcessor: function(processors, ids) {
+	findID : function(ids, all) {
 		
 		var result = null;
-		if (! (ids instanceof Array)) {
-			ids = [ids];
-		}
-		ids.forEach(function(id) {
-			if (result === null) {
-				processors.forEach(function(each) {
+		if (ids instanceof Array) {
+			ids.forEach(function(id) {
+				all.forEach(function(each) {
 					if (each.id == id) {
-						result = each;
+						result = id;
 					}
-				});
-			}
-		});
+				}.bind(this));
+			}.bind(this));
+		} else {
+			result = ids;
+		}
 		return result;
 	},
 	
