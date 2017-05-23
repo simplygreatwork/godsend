@@ -93,8 +93,13 @@ Sender = module.exports = Class.extend({
 				streams.outbound.error.on('end', function() {
 					if (false) streams.inbound.error.end();
 				});
-				if (properties.data) {
+				if (properties.write) {
+					properties.write(streams.outbound.main)
+				} else {
 					var data = properties.data;
+					if (! data) {
+						data = {};
+					}
 					if (!(data instanceof Array)) {
 						data = [data];
 					}
@@ -102,8 +107,6 @@ Sender = module.exports = Class.extend({
 						outbound.write(each);
 					}.bind(this));
 					outbound.end();
-				} else {
-					if (properties.write) properties.write(streams.outbound.main);
 				}
 			}.bind(this));
 		}.bind(this));
