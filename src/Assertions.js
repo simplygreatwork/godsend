@@ -20,7 +20,7 @@ Assertions = module.exports = {
 		try {
 			assert.ok(properties.pattern, 'The send request must contain a pattern object.');
 			assert.notOk(properties.received, 'The name of the receiving function is "receive" and not "received".');
-			assert.ok(properties.data || properties.write, 'The send request must contain a data object or write function.');
+			if (false) assert.ok(properties.data || properties.write, 'The send request must contain a data object or write function.');
 			assert.ok(properties.read || properties.receive, 'The send request must contain a read function or receive function.');
 		} catch (e) {
 			throw e;
