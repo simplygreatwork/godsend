@@ -123,13 +123,9 @@ Register = module.exports = Class.extend({
 		});
 	},
 	
-	sortProcessorsByExecution : function(processors) {
+	sortProcessorsByExecution : function(all) {
 		
-		var all = processors;
-		var src = [];
-		processors.forEach(function(each) {
-			src.push(each);
-		}.bind(this));
+		var src = all.slice(0, all.length);
 		var dest = [{
 			id : 'start',
 			weight : -Number.MAX_VALUE
@@ -144,9 +140,7 @@ Register = module.exports = Class.extend({
 				src.push(object);
 			}
 		}
-		dest.shift();
-		dest.pop();
-		return dest;
+		return dest.slice(1, dest.length - 1);
 	},
 	
 	insert : function(object, dest, all) {
