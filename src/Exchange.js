@@ -314,7 +314,6 @@ var Learning = Secure.extend({
 	initialize: function(properties) {
 		
 		Object.assign(this, properties);
-		this.learnables = this.learnables || [];
 		this.initializeUsers();
 	},
 	
@@ -378,7 +377,7 @@ var Learning = Secure.extend({
 				var username = connection.credentials.username;
 				var user = this.users[username];
 				this.learn('receivable', request, user);
-				restream.received = true
+				restream.received = true;
 			}
 		}
 	},
