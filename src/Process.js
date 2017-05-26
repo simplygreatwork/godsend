@@ -11,8 +11,10 @@ Process = module.exports = Class.extend({
 	
 	assemble: function() {
 		
-		this.processors.forEach(function(each, index) {
-			this.processors[index] = new Processor({
+		var processors = this.processors;
+		this.processors = [];
+		processors.forEach(function(each, index) {
+			this.processors.push(new Processor({
 				id: each.id,
 				weight: each._weight,
 				process: each.run,
@@ -21,7 +23,7 @@ Process = module.exports = Class.extend({
 				request: this.request,
 				response: this.response,
 				connection: this.connection
-			})
+			}));
 		}.bind(this));
 		if (this.processors.length === 0) {
 			this.processors.push(new Processor({
@@ -39,11 +41,11 @@ Process = module.exports = Class.extend({
 		this.processors.push(this.streams.main);
 		this.processors.forEach(function(each, index) {
 			if (index > 0) {
-				this.processors[index - 1].pipe(this.processors[index])
+				this.processors[index - 1].pipe(this.processors[index]);
 			}
 		}.bind(this));
 	},
-
+	
 	write: function(data) {
 
 		this.processors[0].write(data);
