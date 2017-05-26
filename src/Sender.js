@@ -31,7 +31,7 @@ Sender = module.exports = Class.extend({
 					this.sendNow(sendable);
 				}
 			}
-		}.bind(this), 1);
+		}.bind(this), 0);
 	},
 	
 	send : function(sendable) {
