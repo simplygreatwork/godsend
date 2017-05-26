@@ -3,23 +3,30 @@ Cache = module.exports = Class.extend({
 	initialize: function(properties) {
 
 		Object.assign(this, properties);
-		this.patterns = {};
+		this.cache = {};
 	},
 
-	cache: function(pattern, processors) {
-
-		this.put(pattern, processors);
+	cache: function(versions, pattern, processors) {
+		
+		this.put(versions, pattern, processors);
 	},
-
-	put: function(pattern, processors) {
-
-		var key = JSON.stringify(pattern, Object.keys(pattern).sort())
-		this.patterns[key] = processors;
+	
+	put: function(versions, pattern, processors) {
+		
+		versions = versions || {};
+		var key = this.key(versions) + this.key(pattern);
+		this.cache[key] = processors;
 	},
-
-	get: function(pattern) {
-
-		var key = JSON.stringify(pattern, Object.keys(pattern).sort())
-		return this.patterns[key];
+	
+	get: function(versions, pattern) {
+		
+		versions = versions || {};
+		var key = this.key(versions) + this.key(pattern);
+		return this.cache[key];
+	},
+	
+	key : function(object) {
+		
+		return JSON.stringify(object, Object.keys(object).sort())
 	}
 });
