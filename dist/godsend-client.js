@@ -16911,7 +16911,7 @@ Assertions = module.exports = {
 		try {
 			assert.ok(properties.pattern, 'The send request must contain a pattern object.');
 			assert.notOk(properties.received, 'The name of the receiving function is "receive" and not "received".');
-			assert.ok(properties.data || properties.write, 'The send request must contain a data object or write function.');
+			if (false) assert.ok(properties.data || properties.write, 'The send request must contain a data object or write function.');
 			assert.ok(properties.read || properties.receive, 'The send request must contain a read function or receive function.');
 		} catch (e) {
 			throw e;
@@ -16996,24 +16996,31 @@ Cache = module.exports = Class.extend({
 	initialize: function(properties) {
 
 		Object.assign(this, properties);
-		this.patterns = {};
+		this.cache = {};
 	},
 
-	cache: function(pattern, processors) {
-
-		this.put(pattern, processors);
+	cache: function(versions, pattern, processors) {
+		
+		this.put(versions, pattern, processors);
 	},
-
-	put: function(pattern, processors) {
-
-		var key = JSON.stringify(pattern, Object.keys(pattern).sort())
-		this.patterns[key] = processors;
+	
+	put: function(versions, pattern, processors) {
+		
+		versions = versions || {};
+		var key = this.key(versions) + this.key(pattern);
+		this.cache[key] = processors;
 	},
-
-	get: function(pattern) {
-
-		var key = JSON.stringify(pattern, Object.keys(pattern).sort())
-		return this.patterns[key];
+	
+	get: function(versions, pattern) {
+		
+		versions = versions || {};
+		var key = this.key(versions) + this.key(pattern);
+		return this.cache[key];
+	},
+	
+	key : function(object) {
+		
+		return JSON.stringify(object, Object.keys(object).sort())
 	}
 });
 
@@ -17066,7 +17073,6 @@ Connection = module.exports = Class.extend({
 		
 		Object.assign(this, properties);
 		this.initializeTransport();
-		this.cache = new Cache();
 		this.sender = new Sender({
 			connection : this
 		});
@@ -17096,22 +17102,35 @@ Connection = module.exports = Class.extend({
 	
 	getProcess: function(register, request, streams, callback) {
 		
-		request = new Request({
-			pattern: request.pattern,
-			username: request.username,
-			candidates: register.getProcessors(request.versions)
-		});
-		request.prepare(function() {
-			request.processors = register.sortProcessorsByExecution(request.processors);
+		var processors = register.cache.get(request.versions, request.pattern);
+		if (processors) {
 			var process = new Process({
 				connection : this,
-				processors: request.processors,
+				processors: processors,
 				streams: streams,
 				request: request,
 				response: new Response()
 			});
 			callback(process);
-		}.bind(this));
+		} else {
+			request = new Request({
+				pattern: request.pattern,
+				username: request.username,
+				candidates: register.getProcessors(request.versions)
+			});
+			request.prepare(function() {
+				request.processors = register.sortProcessorsByExecution(request.processors);
+				register.cache.put(request.versions, request.pattern, request.processors);
+				var process = new Process({
+					connection : this,
+					processors: request.processors,
+					streams: streams,
+					request: request,
+					response: new Response()
+				});
+				callback(process);
+			}.bind(this));
+		}
 	},
 	
 	getRegister : function(route) {
@@ -17170,8 +17189,10 @@ Process = module.exports = Class.extend({
 	
 	assemble: function() {
 		
-		this.processors.forEach(function(each, index) {
-			this.processors[index] = new Processor({
+		var processors = this.processors;
+		this.processors = [];
+		processors.forEach(function(each, index) {
+			this.processors.push(new Processor({
 				id: each.id,
 				weight: each._weight,
 				process: each.run,
@@ -17180,7 +17201,7 @@ Process = module.exports = Class.extend({
 				request: this.request,
 				response: this.response,
 				connection: this.connection
-			})
+			}));
 		}.bind(this));
 		if (this.processors.length === 0) {
 			this.processors.push(new Processor({
@@ -17198,11 +17219,11 @@ Process = module.exports = Class.extend({
 		this.processors.push(this.streams.main);
 		this.processors.forEach(function(each, index) {
 			if (index > 0) {
-				this.processors[index - 1].pipe(this.processors[index])
+				this.processors[index - 1].pipe(this.processors[index]);
 			}
 		}.bind(this));
 	},
-
+	
 	write: function(data) {
 
 		this.processors[0].write(data);
@@ -17346,7 +17367,7 @@ Register = module.exports = Class.extend({
 		
 		Object.assign(this, properties);
 		this.processors = [];
-		this.cache = {};
+		this.cache = new Cache();
 	},
 	
 	addProcessor: function(processor) {
@@ -17355,7 +17376,7 @@ Register = module.exports = Class.extend({
 		this.processors.push(processor);
 		this.sortProcessorsByVersion(this.processors);
 		this.checkConflicts();
-		this.cache = {}; // important: MUST invalidate any cached processors when adding
+		this.cache = new Cache(); // important: MUST invalidate any cached processors when adding
 	},
 	
 	removeProcessor: function(properties) {
@@ -17406,13 +17427,7 @@ Register = module.exports = Class.extend({
 		
 		var result = null;
 		versions = versions || {};
-		var key = Utility.stringify(versions);
-		if (this.cache[key]) {
-			result = this.cache[key];
-		} else {
-			result = this.assembleProcessors(versions);
-			this.cache[key] = result;
-		}
+		result = this.assembleProcessors(versions);
 		return result;
 	},
 	
@@ -17460,13 +17475,9 @@ Register = module.exports = Class.extend({
 		});
 	},
 	
-	sortProcessorsByExecution : function(processors) {
+	sortProcessorsByExecution : function(all) {
 		
-		var all = processors;
-		var src = [];
-		processors.forEach(function(each) {
-			src.push(each);
-		}.bind(this));
+		var src = all.slice(0, all.length);
 		var dest = [{
 			id : 'start',
 			weight : -Number.MAX_VALUE
@@ -17481,9 +17492,7 @@ Register = module.exports = Class.extend({
 				src.push(object);
 			}
 		}
-		dest.shift();
-		dest.pop();
-		return dest;
+		return dest.slice(1, dest.length - 1);
 	},
 	
 	insert : function(object, dest, all) {
@@ -17676,7 +17685,7 @@ Sender = module.exports = Class.extend({
 					this.sendNow(sendable);
 				}
 			}
-		}.bind(this), 1);
+		}.bind(this), 0);
 	},
 	
 	send : function(sendable) {
@@ -17738,8 +17747,13 @@ Sender = module.exports = Class.extend({
 				streams.outbound.error.on('end', function() {
 					if (false) streams.inbound.error.end();
 				});
-				if (properties.data) {
+				if (properties.write) {
+					properties.write(streams.outbound.main)
+				} else {
 					var data = properties.data;
+					if (! data) {
+						data = {};
+					}
 					if (!(data instanceof Array)) {
 						data = [data];
 					}
@@ -17747,8 +17761,6 @@ Sender = module.exports = Class.extend({
 						outbound.write(each);
 					}.bind(this));
 					outbound.end();
-				} else {
-					if (properties.write) properties.write(streams.outbound.main);
 				}
 			}.bind(this));
 		}.bind(this));
