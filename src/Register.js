@@ -9,7 +9,7 @@ Register = module.exports = Class.extend({
 		
 		Object.assign(this, properties);
 		this.processors = [];
-		this.cache = {};
+		this.cache = new Cache();
 	},
 	
 	addProcessor: function(processor) {
@@ -18,7 +18,7 @@ Register = module.exports = Class.extend({
 		this.processors.push(processor);
 		this.sortProcessorsByVersion(this.processors);
 		this.checkConflicts();
-		this.cache = {}; // important: MUST invalidate any cached processors when adding
+		this.cache = new Cache(); // important: MUST invalidate any cached processors when adding
 	},
 	
 	removeProcessor: function(properties) {
@@ -69,13 +69,7 @@ Register = module.exports = Class.extend({
 		
 		var result = null;
 		versions = versions || {};
-		var key = Utility.stringify(versions);
-		if (this.cache[key]) {
-			result = this.cache[key];
-		} else {
-			result = this.assembleProcessors(versions);
-			this.cache[key] = result;
-		}
+		result = this.assembleProcessors(versions);
 		return result;
 	},
 	
