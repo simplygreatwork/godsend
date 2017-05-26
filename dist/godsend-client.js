@@ -17530,7 +17530,7 @@ Register = module.exports = Class.extend({
 		if (ids instanceof Array) {
 			ids.forEach(function(id) {
 				all.forEach(function(each) {
-					if (each.id == id) {
+					if ((result == null) && (each.id == id)) {
 						result = id;
 					}
 				}.bind(this));
