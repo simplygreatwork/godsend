@@ -15,7 +15,6 @@ Connection = module.exports = Class.extend({
 		
 		Object.assign(this, properties);
 		this.initializeTransport();
-		this.cache = new Cache();
 		this.sender = new Sender({
 			connection : this
 		});
@@ -45,22 +44,35 @@ Connection = module.exports = Class.extend({
 	
 	getProcess: function(register, request, streams, callback) {
 		
-		request = new Request({
-			pattern: request.pattern,
-			username: request.username,
-			candidates: register.getProcessors(request.versions)
-		});
-		request.prepare(function() {
-			request.processors = register.sortProcessorsByExecution(request.processors);
+		var processors = register.cache.get(request.versions, request.pattern);
+		if (processors) {
 			var process = new Process({
 				connection : this,
-				processors: request.processors,
+				processors: processors,
 				streams: streams,
 				request: request,
 				response: new Response()
 			});
 			callback(process);
-		}.bind(this));
+		} else {
+			request = new Request({
+				pattern: request.pattern,
+				username: request.username,
+				candidates: register.getProcessors(request.versions)
+			});
+			request.prepare(function() {
+				request.processors = register.sortProcessorsByExecution(request.processors);
+				register.cache.put(request.versions, request.pattern, request.processors);
+				var process = new Process({
+					connection : this,
+					processors: request.processors,
+					streams: streams,
+					request: request,
+					response: new Response()
+				});
+				callback(process);
+			}.bind(this));
+		}
 	},
 	
 	getRegister : function(route) {
