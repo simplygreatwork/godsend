@@ -4,9 +4,9 @@ Utility = module.exports = {
 
 		return string;
 	},
-
+	
 	digesting: function(string) {
-
+		
 		var md = forge.md.sha1.create();
 		md.update(string);
 		return md.digest().toHex();
@@ -28,7 +28,7 @@ Utility = module.exports = {
 		}.bind(this));
 		return result;
 	},
-
+	
 	matchesStrictly: function(pattern, patterns) {
 
 		var result = false;
@@ -70,7 +70,7 @@ Utility = module.exports = {
 	},
 
 	isHandled: function(result) {
-
+		
 		var handled = false;
 		if (result.value) {
 			if (JSON.stringify(result.value) != '{}') {
@@ -78,5 +78,16 @@ Utility = module.exports = {
 			}
 		}
 		return handled;
+	},
+	
+	primitize : function(pattern) {
+		
+		var result = {};
+		Object.keys(pattern).forEach(function(key) {
+			if (Object(pattern[key]) !== pattern[key]) {					// gather only the primitives in the pattern
+				result[key] = pattern[key];
+			}
+		}.bind(this));
+		return result;
 	}
 };
