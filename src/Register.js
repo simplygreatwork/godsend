@@ -1,7 +1,7 @@
-var toposort = require('toposort');
-var uuid = require('uuid/v4');
+
 var Class = require('./Class');
 var Utility = require('./Utility');
+var uuid = require('uuid/v4');
 
 Register = module.exports = Class.extend({
 	
@@ -9,7 +9,7 @@ Register = module.exports = Class.extend({
 		
 		Object.assign(this, properties);
 		this.processors = [];
-		this.cache = new Cache();
+		this.cache = new cache.Processor();
 	},
 	
 	addProcessor: function(processor) {
@@ -18,7 +18,7 @@ Register = module.exports = Class.extend({
 		this.processors.push(processor);
 		this.sortProcessorsByVersion(this.processors);
 		this.checkConflicts();
-		this.cache = new Cache(); // important: MUST invalidate any cached processors when adding
+		this.cache = new cache.Processor(); // important: MUST invalidate any cached processors when adding
 	},
 	
 	removeProcessor: function(properties) {
