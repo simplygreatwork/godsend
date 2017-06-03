@@ -100,6 +100,21 @@ var Open = Class.extend({
 			main: restream.main,
 			error: restream.error
 		});
+	},
+	
+	received: function(request, stream, restream, data, object, connection) {
+		
+		var matches = true;
+		if (object) {
+			if (Utility.stringify(data) != Utility.stringify(object)) {
+				matches = false;
+			}
+		} else {
+			matches = false;
+		}
+		if (matches === false) {
+			stream.main.write(data);
+		}
 	}
 });
 
@@ -109,6 +124,7 @@ var Secure = Open.extend({
 		
 		Object.assign(this, properties);
 		this.initializeUsers();
+		if (true) this.cache = new cache.Connection();
 	},
 	
 	initializeUsers: function() {
@@ -286,17 +302,12 @@ var Secure = Open.extend({
 			request.username = username;
 			request.versions = user.versions;
 			if (user && user.isSendable(request.pattern)) {
-				var sent = false;
-				this.broker.connections.forEach(function(each) {
-					if (each.credentials) {
-						user = this.users[each.credentials.username];
-						if (user.isReceivable(request.pattern)) {
-							sent = true;
-							this.broadcast(request, stream, each);
-						}
-					}
+				var pattern = Utility.primitize(request.pattern);
+				var connections = this.find(pattern);
+				connections.forEach(function(connection) {
+					this.broadcast(request, stream, connection);
 				}.bind(this));
-				if (!sent) {
+				if (connections.length === 0) {
 					stream.main.end();
 					stream.error.end();
 				}
@@ -305,6 +316,59 @@ var Secure = Open.extend({
 			}
 		} else {
 			console.error('Connection is missing valid credentials.');
+		}
+	},
+	
+	find : function(pattern) {
+		
+		var connections = null;
+		if (this.cache) connections = this.cache.get(pattern);
+		if (! connections) {
+			connections = [];
+			var user = null;
+			this.broker.connections.forEach(function(each) {
+				if (each.credentials) {
+					user = this.users[each.credentials.username];
+					if (user.isReceivable(pattern)) {
+						connections.push(each);
+					}
+				}
+			}.bind(this));
+			if (this.cache) this.cache.put(pattern, connections);
+		}
+		return connections;
+	},
+	
+	patch : function(connection) {
+		
+		if (this.cache) {
+			var user = this.users[connection.credentials.username];
+			Object.keys(this.cache.cache).forEach(function(pattern) {
+				if (user.isReceivable(pattern)) {
+					var connections = this.cache.get(pattern);
+					if ((connections) && (connections.indexOf(connection) === -1)) {
+						connections.push(connection);
+					}
+				}
+			}.bind(this));
+		}
+	},
+	
+	unpatch : function(connection) {
+		
+		if (this.cache) {
+			var user = this.users[connection.credentials.username];
+			Object.keys(this.cache.cache).forEach(function(pattern) {
+				if (user.isReceivable(pattern)) {
+					var connections = this.cache.get(pattern);
+					if (connections) {
+						var index = connections.indexOf(connection);
+						if (index > -1) {
+							connections.splice(index, 1);
+						}
+					}
+				}
+			}.bind(this));
 		}
 	}
 });
@@ -385,15 +449,10 @@ var Learning = Secure.extend({
 	learn: function(type, request, user, callback) {
 		
 		if (!Utility.matchesProperties(request.pattern, {							// prevent cyclical issue
-				topic: 'authentication',
-				action: 'put-user'
+			topic: 'authentication',
+			action: 'put-user'
 		})) {
-			var pattern = {};
-			Object.keys(request.pattern).forEach(function(key) {
-				if (Object(request.pattern[key]) !== request.pattern[key]) {	// learn only the primitives in the pattern
-					pattern[key] = request.pattern[key];
-				}
-			}.bind(this));
+			var pattern = Utility.primitize(request.pattern);						// learn only the primitives in the pattern
 			var added = user.addPattern(type, pattern);
 			if (added) {
 				Logger.get('exchange-learning').info('Added "' + type + '" for user "' + user.credentials.username + '".');
@@ -420,7 +479,6 @@ var Learning = Secure.extend({
 		});
 	}
 });
-
 
 exchange = module.exports = {
 
