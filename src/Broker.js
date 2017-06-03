@@ -23,6 +23,7 @@ Broker = module.exports = Class.extend({
 			}.bind(this));
 			socket.on('disconnect', function() { // need to purge the user and clear credentials
 				console.log('Client disconnected.');
+				if (this.exchange.unpatch) this.exchange.unpatch(socket);
 				socket.credentials = null;
 				delete socket.credentials;
 				var index = this.connections.indexOf(socket);
@@ -51,6 +52,7 @@ Broker = module.exports = Class.extend({
 					socket.credentials = credentials;
 					var message = '"' + credentials.username + '" is authentic.'
 					console.log(message);
+					if (this.exchange.patch) this.exchange.patch(socket);
 					this.exchange.notify('presence', 'online', credentials.username);
 					respond({
 						value: {
@@ -77,9 +79,9 @@ Broker = module.exports = Class.extend({
 			});
 		}
 	},
-
-	findConnection: function(id) {
-
+	
+	findConnection: function(id) {				// this actually ought to be a hash lookup
+		
 		var result = null;
 		this.connections.forEach(function(each) {
 			if (each.id == id) {
