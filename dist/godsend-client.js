@@ -16731,71 +16731,6 @@ arguments[4][98][0].apply(exports,arguments)
 },{"dup":98,"ms":113}],113:[function(require,module,exports){
 arguments[4][99][0].apply(exports,arguments)
 },{"dup":99}],114:[function(require,module,exports){
-
-/**
- * Topological sorting function
- *
- * @param {Array} edges
- * @returns {Array}
- */
-
-module.exports = exports = function(edges){
-  return toposort(uniqueNodes(edges), edges)
-}
-
-exports.array = toposort
-
-function toposort(nodes, edges) {
-  var cursor = nodes.length
-    , sorted = new Array(cursor)
-    , visited = {}
-    , i = cursor
-
-  while (i--) {
-    if (!visited[i]) visit(nodes[i], i, [])
-  }
-
-  return sorted
-
-  function visit(node, i, predecessors) {
-    if(predecessors.indexOf(node) >= 0) {
-      throw new Error('Cyclic dependency: '+JSON.stringify(node))
-    }
-
-    if (!~nodes.indexOf(node)) {
-      throw new Error('Found unknown node. Make sure to provided all involved nodes. Unknown node: '+JSON.stringify(node))
-    }
-
-    if (visited[i]) return;
-    visited[i] = true
-
-    // outgoing edges
-    var outgoing = edges.filter(function(edge){
-      return edge[0] === node
-    })
-    if (i = outgoing.length) {
-      var preds = predecessors.concat(node)
-      do {
-        var child = outgoing[--i][1]
-        visit(child, nodes.indexOf(child), preds)
-      } while (i)
-    }
-
-    sorted[--cursor] = node
-  }
-}
-
-function uniqueNodes(arr){
-  var res = []
-  for (var i = 0, len = arr.length; i < len; i++) {
-    var edge = arr[i]
-    if (res.indexOf(edge[0]) < 0) res.push(edge[0])
-    if (res.indexOf(edge[1]) < 0) res.push(edge[1])
-  }
-  return res
-}
-
-},{}],115:[function(require,module,exports){
 /**
  * Convert array of 16 byte values to UUID string format of the form:
  * XXXXXXXX-XXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
@@ -16820,7 +16755,7 @@ function bytesToUuid(buf, offset) {
 
 module.exports = bytesToUuid;
 
-},{}],116:[function(require,module,exports){
+},{}],115:[function(require,module,exports){
 (function (global){
 // Unique ID creation requires a high quality random # generator.  In the
 // browser this is a little complicated due to unknown quality of Math.random()
@@ -16857,7 +16792,7 @@ if (!rng) {
 module.exports = rng;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],117:[function(require,module,exports){
+},{}],116:[function(require,module,exports){
 var rng = require('./lib/rng');
 var bytesToUuid = require('./lib/bytesToUuid');
 
@@ -16888,7 +16823,7 @@ function v4(options, buf, offset) {
 
 module.exports = v4;
 
-},{"./lib/bytesToUuid":115,"./lib/rng":116}],118:[function(require,module,exports){
+},{"./lib/bytesToUuid":114,"./lib/rng":115}],117:[function(require,module,exports){
 var assert = require('proclaim');
 var Logger = require('js-logger');
 
@@ -16940,7 +16875,7 @@ Assertions = module.exports = {
 	}
 };
 
-},{"js-logger":30,"proclaim":31}],119:[function(require,module,exports){
+},{"js-logger":30,"proclaim":31}],118:[function(require,module,exports){
 var Class = require('./Class');
 var Connection = require('./Connection');
 var assert = require('./Assertions');
@@ -16990,41 +16925,71 @@ Bus = module.exports = Class.extend({
 	}
 });
 
-},{"./Assertions":118,"./Class":121,"./Connection":122}],120:[function(require,module,exports){
-Cache = module.exports = Class.extend({
+},{"./Assertions":117,"./Class":120,"./Connection":121}],119:[function(require,module,exports){
 
-	initialize: function(properties) {
-
-		Object.assign(this, properties);
-		this.cache = {};
-	},
-
-	cache: function(versions, pattern, processors) {
-		
-		this.put(versions, pattern, processors);
-	},
+cache = module.exports = {
 	
-	put: function(versions, pattern, processors) {
+	Processor: Class.extend({
 		
-		versions = versions || {};
-		var key = this.key(versions) + this.key(pattern);
-		this.cache[key] = processors;
-	},
+		initialize: function(properties) {
+			
+			Object.assign(this, properties);
+			this.cache = {};
+		},
+		
+		cache: function(versions, pattern, processors) {
+			
+			this.put(versions, pattern, processors);
+		},
+		
+		put: function(versions, pattern, processors) {
+			
+			versions = versions || {};
+			var key = this.key(versions) + this.key(pattern);
+			this.cache[key] = processors;
+		},
+		
+		get: function(versions, pattern) {
+			
+			versions = versions || {};
+			var key = this.key(versions) + this.key(pattern);
+			return this.cache[key];
+		},
+		
+		key : function(object) {
+			
+			return JSON.stringify(object, Object.keys(object).sort())
+		}
+	}),
 	
-	get: function(versions, pattern) {
+	Connection: Class.extend({
 		
-		versions = versions || {};
-		var key = this.key(versions) + this.key(pattern);
-		return this.cache[key];
-	},
-	
-	key : function(object) {
+		initialize: function(properties) {
+			
+			Object.assign(this, properties);
+			this.cache = {};
+		},
 		
-		return JSON.stringify(object, Object.keys(object).sort())
-	}
-});
+		put: function(pattern, connections) {
+			
+			var key = this.key(pattern);
+			this.cache[key] = connections;
+		},
+		
+		get: function(pattern) {
+			
+			var key = this.key(pattern);
+			return this.cache[key];
+		},
+		
+		key : function(object) {
+			
+			return JSON.stringify(object, Object.keys(object).sort())
+		}
+	})
+};
 
-},{}],121:[function(require,module,exports){
+},{}],120:[function(require,module,exports){
 Class = module.exports = {
 	
 	extend: function(properties) {
@@ -17055,7 +17020,7 @@ Class = module.exports = {
 	}
 };
 
-},{}],122:[function(require,module,exports){
+},{}],121:[function(require,module,exports){
 
 var Class = require('./Class');
 var Transport = require('./Transport');
@@ -17175,7 +17140,7 @@ Connection = module.exports = Class.extend({
 	}
 });
 
-},{"./Cache":120,"./Class":121,"./Process":123,"./Receiver":125,"./Register":126,"./Request":127,"./Response":128,"./Sender":129,"./Transport":130}],123:[function(require,module,exports){
+},{"./Cache":119,"./Class":120,"./Process":122,"./Receiver":124,"./Register":125,"./Request":126,"./Response":127,"./Sender":128,"./Transport":129}],122:[function(require,module,exports){
 var Class = require('./Class');
 var Processor = require('./Processor');
 
@@ -17241,7 +17206,7 @@ Process = module.exports = Class.extend({
 	}
 });
 
-},{"./Class":121,"./Processor":124}],124:[function(require,module,exports){
+},{"./Class":120,"./Processor":123}],123:[function(require,module,exports){
 var Transform = require('stream').Transform || require('readable-stream').Transform;
 var util = require('util');
 
@@ -17327,7 +17292,7 @@ Object.assign(Processor.prototype, {
 
 module.exports = Processor;
 
-},{"readable-stream":55,"stream":25,"util":29}],125:[function(require,module,exports){
+},{"readable-stream":55,"stream":25,"util":29}],124:[function(require,module,exports){
 var Class = require('./Class');
 
 Receiver = module.exports = Class.extend({
@@ -17354,12 +17319,12 @@ Receiver = module.exports = Class.extend({
 	},
 });
 
-},{"./Class":121}],126:[function(require,module,exports){
+},{"./Class":120}],125:[function(require,module,exports){
 (function (process){
-var toposort = require('toposort');
-var uuid = require('uuid/v4');
+
 var Class = require('./Class');
 var Utility = require('./Utility');
+var uuid = require('uuid/v4');
 
 Register = module.exports = Class.extend({
 	
@@ -17367,7 +17332,7 @@ Register = module.exports = Class.extend({
 		
 		Object.assign(this, properties);
 		this.processors = [];
-		this.cache = new Cache();
+		this.cache = new cache.Processor();
 	},
 	
 	addProcessor: function(processor) {
@@ -17376,7 +17341,7 @@ Register = module.exports = Class.extend({
 		this.processors.push(processor);
 		this.sortProcessorsByVersion(this.processors);
 		this.checkConflicts();
-		this.cache = new Cache(); // important: MUST invalidate any cached processors when adding
+		this.cache = new cache.Processor(); // important: MUST invalidate any cached processors when adding
 	},
 	
 	removeProcessor: function(properties) {
@@ -17558,7 +17523,7 @@ Register = module.exports = Class.extend({
 	}
 });
 }).call(this,require('_process'))
-},{"./Class":121,"./Utility":131,"_process":8,"toposort":114,"uuid/v4":117}],127:[function(require,module,exports){
+},{"./Class":120,"./Utility":130,"_process":8,"uuid/v4":116}],126:[function(require,module,exports){
 var Class = require('./Class');
 var Utility = require('./Utility');
 
@@ -17640,7 +17605,7 @@ Request = module.exports = Class.extend({
 	}
 });
 
-},{"./Class":121,"./Utility":131}],128:[function(require,module,exports){
+},{"./Class":120,"./Utility":130}],127:[function(require,module,exports){
 var Class = require('./Class');
 
 Response = module.exports = Class.extend({
@@ -17651,7 +17616,7 @@ Response = module.exports = Class.extend({
 	}
 });
 
-},{"./Class":121}],129:[function(require,module,exports){
+},{"./Class":120}],128:[function(require,module,exports){
 
 var Writable = require('stream').Writable || require('readable-stream').Writable;
 var io = require('socket.io-client');
@@ -17798,7 +17763,7 @@ Sender = module.exports = Class.extend({
 	}
 });
 
-},{"./Assertions":118,"./Class":121,"readable-stream":55,"socket.io-client":56,"socket.io-stream":103,"stream":25}],130:[function(require,module,exports){
+},{"./Assertions":117,"./Class":120,"readable-stream":55,"socket.io-client":56,"socket.io-stream":103,"stream":25}],129:[function(require,module,exports){
 var io = require('socket.io-client');
 var ss = require('socket.io-stream');
 var Logger = require('js-logger');
@@ -17854,16 +17819,16 @@ Transport = module.exports = Class.extend({
 	}
 });
 
-},{"js-logger":30,"socket.io-client":56,"socket.io-stream":103}],131:[function(require,module,exports){
+},{"js-logger":30,"socket.io-client":56,"socket.io-stream":103}],130:[function(require,module,exports){
 Utility = module.exports = {
 
 	digest: function(string) {
 
 		return string;
 	},
-
+	
 	digesting: function(string) {
-
+		
 		var md = forge.md.sha1.create();
 		md.update(string);
 		return md.digest().toHex();
@@ -17885,7 +17850,7 @@ Utility = module.exports = {
 		}.bind(this));
 		return result;
 	},
-
+	
 	matchesStrictly: function(pattern, patterns) {
 
 		var result = false;
@@ -17927,7 +17892,7 @@ Utility = module.exports = {
 	},
 
 	isHandled: function(result) {
-
+		
 		var handled = false;
 		if (result.value) {
 			if (JSON.stringify(result.value) != '{}') {
@@ -17935,10 +17900,21 @@ Utility = module.exports = {
 			}
 		}
 		return handled;
+	},
+	
+	primitize : function(pattern) {
+		
+		var result = {};
+		Object.keys(pattern).forEach(function(key) {
+			if (Object(pattern[key]) !== pattern[key]) {					// gather only the primitives in the pattern
+				result[key] = pattern[key];
+			}
+		}.bind(this));
+		return result;
 	}
 };
 
-},{}],132:[function(require,module,exports){
+},{}],131:[function(require,module,exports){
 
 module.exports = {
 	Bus : require('./Bus'),
@@ -17966,5 +17942,5 @@ module.exports = {
 	}
 };
 
-},{"./Bus":119,"./Class":121,"uuid/v4":117}]},{},[132])(132)
+},{"./Bus":118,"./Class":120,"uuid/v4":116}]},{},[131])(131)
 });
