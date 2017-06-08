@@ -2,13 +2,13 @@
 cache = module.exports = {
 	
 	Processor: Class.extend({
-	
+		
 		initialize: function(properties) {
 			
 			Object.assign(this, properties);
 			this.cache = {};
 		},
-	
+		
 		cache: function(versions, pattern, processors) {
 			
 			this.put(versions, pattern, processors);
