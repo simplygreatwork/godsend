@@ -396,15 +396,21 @@ connection.mount({
 
 ### Support
 
-- This project has not been tested in a production environment. Security, error handling, and fault tolerance need more evaluation.
+- This project **has not been tested** in a production environment. Security, error handling, and fault tolerance need more evaluation.
 - If you encounter any issues installing, starting, or using Godsend, please email simplygreatwork@gmail.com. I will greatly appreciate your efforts. 
 
-### Links
+### Godsend Subprojects
 
-[Godsend Examples @ RunKit](https://www.notion.so/Examples-0ceecf7945ac4b198c340fbf36075cda)
+[Godsend Examples](https://github.com/simplygreatwork/godsend-examples/tree/master/examples)
 
-[Godsend Wiki](https://www.notion.so/Messaging-30c17b4e590f44689d9571f1f1f690c0)
+[Godsend Basics](https://github.com/simplygreatwork/godsend-basics/tree/master/src)
 
-[Godsend Preview @ Cloud9](https://preview.c9users.io/simplygreatwork/godsend/godsend/)
+[Godsend Extras](https://github.com/simplygreatwork/godsend-extras/tree/master/src)
 
-[Godsend IDE @ Cloud9](https://ide.c9.io/simplygreatwork/godsend/)
+### Godsend Example Diagrams
+
+![Putting Data](https://raw.githubusercontent.com/simplygreatwork/godsend/master/docs/diagrams/put-data.png)
+
+![Getting Data](https://raw.githubusercontent.com/simplygreatwork/godsend/master/docs/diagrams/get-data.png)
+
+
