@@ -323,8 +323,7 @@ var Secure = Open.extend({
 		
 		var connections = null;
 		if (this.cache) connections = this.cache.get(pattern);
-		if (! connections) {
-			if (this.cache) this.cache.put(pattern, connections);
+		if ((! connections) || (connections.length === 0)) {					// review: revisit this for correctness
 			connections = [];
 			var user = null;
 			this.broker.connections.forEach(function(each) {
@@ -335,6 +334,7 @@ var Secure = Open.extend({
 					}
 				}
 			}.bind(this));
+			if (this.cache) this.cache.put(pattern, connections);
 		}
 		return connections;
 	},
