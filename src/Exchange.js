@@ -324,6 +324,7 @@ var Secure = Open.extend({
 		var connections = null;
 		if (this.cache) connections = this.cache.get(pattern);
 		if (! connections) {
+			if (this.cache) this.cache.put(pattern, connections);
 			connections = [];
 			var user = null;
 			this.broker.connections.forEach(function(each) {
@@ -334,7 +335,6 @@ var Secure = Open.extend({
 					}
 				}
 			}.bind(this));
-			if (this.cache) this.cache.put(pattern, connections);
 		}
 		return connections;
 	},
@@ -444,6 +444,36 @@ var Learning = Secure.extend({
 				restream.received = true;
 			}
 		}
+	},
+	
+	authenticate: function(credentials) {
+		
+		var result = false;
+		var user = this.users[credentials.username];
+		if (user) {
+			if (user.credentials) {
+				if (user.credentials.username == credentials.username) {
+					if (user.credentials.passphrase == credentials.passphrase) {
+						result = true;
+					}
+				}
+			}
+		} else {
+			user = new User({
+				credentials : credentials,
+				patterns : {
+					sendable : [],
+					receivable : []
+				},
+				versions : {}
+			});
+			this.users[credentials.username] = user;
+			this.save(user, function() {
+				console.log('Learned new user: ' + user.credentials.username);
+			});
+			result = true;
+		}
+		return result;
 	},
 	
 	learn: function(type, request, user, callback) {
